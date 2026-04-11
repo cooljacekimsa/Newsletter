@@ -9,7 +9,7 @@
  * controlled by Firestore Security Rules.
  */
 const firebaseConfig = {
-  apiKey:            "REPLACE_WITH_API_KEY",
+  apiKey:            "AIzaSyAZP2M8k0nhm5G6EVVj3gcLlwewUSZLO14",
   authDomain:        "africa-office.firebaseapp.com",
   projectId:         "africa-office",
   storageBucket:     "africa-office.appspot.com",

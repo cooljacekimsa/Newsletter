@@ -3,7 +3,12 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
 
-const DEFAULT_SEED_URLS = ['https://www.yna.co.kr/ubuntu/index'];
+const DEFAULT_SEED_URLS = [
+  'https://www.yna.co.kr/ubuntu/index',        // 연합뉴스 아프리카
+  'https://www.yna.co.kr/international/index', // 연합뉴스 국제
+  'https://www.hani.co.kr/arti/international/', // 한겨레 국제
+  'https://www.khan.co.kr/world/',             // 경향신문 세계
+];
 const RATE_LIMIT_MS = 1000;
 const MAX_CONCURRENT = 5;
 
@@ -117,14 +122,19 @@ function parseArticle(html, url, noisePhrases) {
 
   let body = '';
   const bodySelectors = [
-    '.article-txt',
-    '.story-news article',
-    '#articleBodyContents',
-    '.article_body',
-    '.news_body',
-    '.article-content',
-    'article .content',
-    'article',
+    '.article-txt',           // 연합뉴스
+    '.story-news article',    // 연합뉴스
+    '#articleBodyContents',   // 한겨레, 다음
+    '.article-body-contents', // 한겨레
+    '.article_body',          // various
+    '.art_body',              // 경향신문
+    '.news_body',             // various
+    '.news-text-area',        // KBS
+    '.detail_body',           // MBC
+    '.article-content',       // various
+    '.article_txt',           // various
+    'article .content',       // generic
+    'article',                // fallback
   ];
   for (const sel of bodySelectors) {
     const el = $(sel);
@@ -168,7 +178,7 @@ function extractArticleLinks(html, baseUrl) {
     try {
       const abs = new URL(href, baseUrl).toString();
       if (getDomain(abs) !== baseDomain) return;
-      if (/\/view\/|\/news\/|\/article\/|AKR\d+|\/\d{7,}/.test(abs)) {
+      if (/\/view\/|\/news\/|\/article\/|\/arti\/|AKR\d+|\/\d{7,}/i.test(abs)) {
         links.add(abs.split('?')[0]);
       }
     } catch { /* ignore */ }

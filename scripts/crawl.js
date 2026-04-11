@@ -61,6 +61,7 @@ async function main() {
     seedUrls: settings.seedUrls,
     hoursBack: settings.hoursBack,
     keywords: settings.keywords,
+    noisePhrases: settings.noisePhrases,
     logFn: writeLog,
   });
   await writeLog('info', `Crawled ${articles.length} articles after keyword filter`);

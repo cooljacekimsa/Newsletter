@@ -99,6 +99,8 @@ body {
 .btn-primary:hover { background: var(--primary-dk); }
 .btn-secondary { background: #e8f0fe; color: var(--primary); border-color: #c5d8fd; }
 .btn-ghost { background: none; border-color: transparent; color: var(--text-2); }
+.btn-danger { background: #fce8e6; color: var(--danger); border-color: #f5c6c2; }
+.btn-danger:hover { background: var(--danger); color: #fff; }
 .btn-full { width: 100%; margin-top: 12px; padding: 12px; font-size: 15px; }
 
 /* ── Inputs ───────────────────────────────────────────── */

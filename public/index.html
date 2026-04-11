@@ -68,23 +68,30 @@
         <p class="placeholder">불러오는 중...</p>
       </div>
 
+      <!-- Test crawl buttons -->
       <div class="card mt">
-        <p class="field-label">수동 수집 실행</p>
-        <p style="font-size:13px;color:var(--text-2);margin-bottom:10px;">
-          수집은 GitHub Actions에서 실행됩니다. 아래 링크를 눌러
-          <strong>Run workflow</strong> 버튼을 클릭하세요.
+        <p class="field-label">테스트 수집</p>
+        <p style="font-size:12px;color:#9aa0a6;margin-bottom:10px;">
+          GitHub Personal Access Token(PAT)을 저장하면 앱에서 직접 수집을 실행할 수 있습니다.
+          PAT는 이 기기의 localStorage에만 저장됩니다.
         </p>
-        <a href="https://github.com/shaunyoo-ao/africa/actions/workflows/crawl.yml"
-           target="_blank" rel="noopener"
-           class="btn btn-primary btn-full"
-           style="display:block;text-align:center;text-decoration:none;padding:12px;">
-          GitHub Actions 열기 → 수동 실행
-        </a>
+        <div style="display:flex;gap:8px;margin-bottom:8px;">
+          <input type="password" id="gh-pat-input" class="input"
+                 placeholder="ghp_xxxx  (workflow 권한 필요)"
+                 style="flex:1;" />
+          <button id="btn-save-pat" class="btn btn-sm btn-secondary" style="flex-shrink:0;">저장</button>
+        </div>
+        <p id="pat-status" style="font-size:12px;color:#9aa0a6;margin-bottom:10px;"></p>
+        <div style="display:flex;gap:8px;">
+          <button id="btn-crawl-24h" class="btn btn-primary" style="flex:1;">24시간 수집</button>
+          <button id="btn-crawl-48h" class="btn btn-primary" style="flex:1;">48시간 수집</button>
+        </div>
+        <div id="trigger-result" style="margin-top:10px;font-size:13px;"></div>
       </div>
 
       <div class="card mt">
         <p class="field-label">자동 수집 일정</p>
-        <p style="font-size:13px;color:var(--text-2);">매일 오전 8시 (한국 시간) 자동 수집</p>
+        <p style="font-size:13px;color:var(--text-2);">평일 오후 12시 (한국 시간) 자동 수집</p>
         <p style="font-size:12px;color:#9aa0a6;margin-top:4px;">
           수집 기간·키워드는 <strong>설정</strong> 탭에서 변경 후 저장하세요.
         </p>

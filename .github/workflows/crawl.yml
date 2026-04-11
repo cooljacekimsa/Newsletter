@@ -1,9 +1,9 @@
 name: Crawl News
 
 on:
-  # Daily at 23:00 UTC = 08:00 KST
+  # Weekdays at 03:00 UTC = 12:00 KST (Mon–Fri)
   schedule:
-    - cron: '0 23 * * *'
+    - cron: '0 3 * * 1-5'
 
   # Manual trigger from GitHub Actions UI
   workflow_dispatch:

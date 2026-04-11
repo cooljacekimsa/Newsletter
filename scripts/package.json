@@ -1,0 +1,11 @@
+{
+  "name": "africa-crawl-scripts",
+  "description": "GitHub Actions crawl scripts for Africa News Newsletter (free-tier, no Functions)",
+  "version": "1.0.0",
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "firebase-admin": "^12.0.0",
+    "axios": "^1.7.0",
+    "cheerio": "^1.0.0"
+  }
+}

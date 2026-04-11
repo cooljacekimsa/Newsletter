@@ -8,18 +8,6 @@ function fmtDate(date) {
   return `${mm}/${dd}`;
 }
 
-/**
- * Generates newsletter text from deduplication groups.
- *
- * Format per article:
- *   □ {제목} ({MM}/{DD})
- *   {기사 본문}
- *   #{언론사} {URL}
- *   관련: #{언론사2} URL2  #{언론사3} URL3   (only if duplicates exist)
- *
- * @param {{ representative: object, duplicates: object[] }[]} groups
- * @returns {string}
- */
 function generateNewsletter(groups) {
   const blocks = groups.map(({ representative: r, duplicates }) => {
     const dateStr = fmtDate(r.publishedAt);

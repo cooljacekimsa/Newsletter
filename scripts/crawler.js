@@ -72,12 +72,11 @@ function parseArticle(html, url) {
 
   const publishedAt = parsePublishedTime(html);
 
-  // Article body — try publisher-specific selectors first
   let body = '';
   const bodySelectors = [
-    '.article-txt',           // 연합뉴스
-    '.story-news article',    // 연합뉴스 alternative
-    '#articleBodyContents',   // Naver-style
+    '.article-txt',
+    '.story-news article',
+    '#articleBodyContents',
     '.article_body',
     '.news_body',
     '.article-content',
@@ -96,7 +95,6 @@ function parseArticle(html, url) {
       if (text.length > 80) { body = text; break; }
     }
   }
-  // Fallback: all paragraphs
   if (!body) {
     body = $('p')
       .map((_, p) => $(p).text().trim())
@@ -131,9 +129,8 @@ function extractArticleLinks(html, baseUrl) {
     try {
       const abs = new URL(href, baseUrl).toString();
       if (getDomain(abs) !== baseDomain) return;
-      // Keep URL patterns that look like news articles
       if (/\/view\/|\/news\/|\/article\/|AKR\d+|\/\d{7,}/.test(abs)) {
-        links.add(abs.split('?')[0]); // strip query string for dedup
+        links.add(abs.split('?')[0]);
       }
     } catch { /* ignore */ }
   });
@@ -156,7 +153,6 @@ async function crawlSeedUrl(seedUrl, startTime, endTime, logFn) {
   const links = extractArticleLinks(indexHtml, seedUrl);
   logFn('info', `Found ${links.length} candidate links from ${seedUrl}`);
 
-  // Process in batches of MAX_CONCURRENT
   for (let i = 0; i < links.length; i += MAX_CONCURRENT) {
     const batch = links.slice(i, i + MAX_CONCURRENT);
     const results = await Promise.allSettled(

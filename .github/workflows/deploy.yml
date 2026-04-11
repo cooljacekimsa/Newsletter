@@ -13,22 +13,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Node.js 18
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          cache: 'npm'
-          cache-dependency-path: functions/package-lock.json
-
-      - name: Install Functions dependencies
-        run: npm ci
-        working-directory: functions
-
-      - name: Deploy to Firebase (Hosting + Functions + Firestore rules)
+      - name: Deploy to Firebase Hosting + Firestore rules
         run: |
+          echo "$FIREBASE_SA" > /tmp/sa.json
+          GOOGLE_APPLICATION_CREDENTIALS=/tmp/sa.json \
           npx firebase-tools@latest deploy \
-            --only hosting,functions,firestore \
+            --only hosting,firestore \
             --project africa-office \
             --non-interactive
+          rm -f /tmp/sa.json
         env:
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+          FIREBASE_SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}

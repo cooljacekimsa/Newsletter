@@ -1,0 +1,38 @@
+name: Crawl News
+
+on:
+  # Daily at 23:00 UTC = 08:00 KST
+  schedule:
+    - cron: '0 23 * * *'
+
+  # Manual trigger from GitHub Actions UI
+  workflow_dispatch:
+    inputs:
+      hours_back:
+        description: '수집 기간 (시간, 기본값: Firestore 설정 사용)'
+        required: false
+        default: ''
+
+jobs:
+  crawl:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm install --prefer-offline
+        working-directory: scripts
+
+      - name: Run crawler
+        run: node crawl.js ${{ github.event.inputs.hours_back }}
+        working-directory: scripts
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}

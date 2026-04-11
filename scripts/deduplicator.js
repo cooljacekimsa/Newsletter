@@ -1,10 +1,5 @@
 'use strict';
 
-/**
- * TF-IDF cosine-similarity based deduplication.
- * Works with Korean (space-separated morphemes) + English tokens.
- */
-
 function tokenize(text) {
   return text
     .toLowerCase()
@@ -16,7 +11,6 @@ function tokenize(text) {
 function buildTfIdfVectors(documents) {
   const N = documents.length;
 
-  // TF per document
   const tfList = documents.map(doc => {
     const tokens = tokenize(doc);
     const freq = {};
@@ -27,19 +21,16 @@ function buildTfIdfVectors(documents) {
     return tf;
   });
 
-  // DF across documents
   const df = {};
   for (const tf of tfList) {
     for (const term of Object.keys(tf)) df[term] = (df[term] || 0) + 1;
   }
 
-  // IDF (smoothed)
   const idf = {};
   for (const [term, cnt] of Object.entries(df)) {
     idf[term] = Math.log((N + 1) / (cnt + 1)) + 1;
   }
 
-  // TF-IDF vectors
   return tfList.map(tf => {
     const vec = {};
     for (const [term, tfVal] of Object.entries(tf)) {
@@ -63,7 +54,6 @@ function cosineSimilarity(v1, v2) {
   return dot / (Math.sqrt(mag1) * Math.sqrt(mag2));
 }
 
-// Union-Find
 function makeUF(n) {
   const p = Array.from({ length: n }, (_, i) => i);
   const find = x => (p[x] === x ? x : (p[x] = find(p[x])));
@@ -79,19 +69,12 @@ function pickRepresentative(group, publisherPriority) {
     const ar = ai === -1 ? 9999 : ai;
     const br = bi === -1 ? 9999 : bi;
     if (ar !== br) return ar - br;
-    // Newer first
     const at = a.publishedAt ? new Date(a.publishedAt).getTime() : 0;
     const bt = b.publishedAt ? new Date(b.publishedAt).getTime() : 0;
     return bt - at;
   })[0];
 }
 
-/**
- * @param {Array} articles
- * @param {string[]} publisherPriority
- * @param {number} threshold  0-1, default 0.75
- * @returns {{ representative: object, duplicates: object[] }[]}
- */
 function deduplicate(articles, publisherPriority = [], threshold = 0.75) {
   if (!articles.length) return [];
 
@@ -107,7 +90,6 @@ function deduplicate(articles, publisherPriority = [], threshold = 0.75) {
     }
   }
 
-  // Group by root
   const groups = {};
   for (let i = 0; i < articles.length; i++) {
     const root = uf.find(i);

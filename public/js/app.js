@@ -15,6 +15,7 @@ document.querySelectorAll('.tab').forEach(tab => {
 
     // Lazy load on first visit
     if (tab.dataset.tab === 'newsletter') window.nlView?.load();
+    if (tab.dataset.tab === 'crawl')      window.crawlView?.load();
     if (tab.dataset.tab === 'settings')   window.settingsView?.load();
     if (tab.dataset.tab === 'logs')       window.logsView?.load();
   });

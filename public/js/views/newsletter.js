@@ -1,23 +1,37 @@
 'use strict';
 
 (function () {
-  const listEl    = document.getElementById('nl-list');
-  const modal     = document.getElementById('nl-modal');
-  const modalTitle = document.getElementById('modal-title');
-  const contentEl = document.getElementById('nl-content');
-  const btnRefresh = document.getElementById('btn-refresh-nl');
-  const btnClose  = document.getElementById('btn-close-modal');
-  const btnCopy   = document.getElementById('btn-copy-nl');
-  const btnShare  = document.getElementById('btn-share-nl');
+  const listEl      = document.getElementById('nl-list');
+  const modal       = document.getElementById('nl-modal');
+  const modalTitle  = document.getElementById('modal-title');
+  const contentEl   = document.getElementById('nl-content');
+  const btnRefresh  = document.getElementById('btn-refresh-nl');
+  const btnClose    = document.getElementById('btn-close-modal');
+  const btnCopy     = document.getElementById('btn-copy-nl');
+  const btnShare    = document.getElementById('btn-share-nl');
 
   let newsletters = [];
 
   async function load() {
     listEl.innerHTML = '<p class="placeholder">불러오는 중...</p>';
     try {
-      const fn = window.functions.httpsCallable('getNewsletters');
-      const { data } = await fn({ limit: 20 });
-      newsletters = data;
+      const snap = await window.db
+        .collection('newsletters')
+        .orderBy('createdAt', 'desc')
+        .limit(20)
+        .get();
+
+      newsletters = snap.docs.map(doc => {
+        const d = doc.data();
+        return {
+          id: doc.id,
+          createdAt:    d.createdAt?.toDate?.()?.toISOString() ?? null,
+          articleCount: d.articleCount  ?? 0,
+          totalCrawled: d.totalCrawled  ?? 0,
+          hoursBack:    d.hoursBack     ?? 24,
+          content:      d.content       ?? '',
+        };
+      });
       render();
     } catch (e) {
       listEl.innerHTML = `<p class="placeholder result-error">오류: ${e.message}</p>`;
@@ -26,7 +40,8 @@
 
   function render() {
     if (!newsletters.length) {
-      listEl.innerHTML = '<p class="placeholder">수집된 뉴스레터가 없습니다. 수집 탭에서 기사를 수집하세요.</p>';
+      listEl.innerHTML =
+        '<p class="placeholder">수집된 뉴스레터가 없습니다.<br>GitHub Actions에서 수집을 실행하세요.</p>';
       return;
     }
     listEl.innerHTML = '';
@@ -54,7 +69,7 @@
       ? new Date(nl.createdAt).toLocaleString('ko-KR')
       : '';
     modalTitle.textContent = `뉴스레터 ${dateStr}`;
-    contentEl.textContent = nl.content || '';
+    contentEl.textContent  = nl.content || '';
     modal.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
   }
@@ -101,7 +116,10 @@
   }
 
   function escHtml(str) {
-    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
   }
 
   window.nlView = { load };

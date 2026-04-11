@@ -1,23 +1,23 @@
 /**
  * Firebase configuration for africa-office.
  *
- * How to find your config values:
- *   Firebase Console → Project Settings → Your apps → Web app → Config
+ * ⚠️  ACTION REQUIRED: Replace REPLACE_WITH_API_KEY below.
+ *   Firebase Console → Project Settings → General → Web API Key
  *
- * These values are SAFE to embed in frontend code.
- * Access control is enforced by Firestore Security Rules.
+ * All other values are already filled in from your web app ID.
+ * These values are safe to embed in frontend code — access is
+ * controlled by Firestore Security Rules.
  */
 const firebaseConfig = {
-  apiKey:            "REPLACE_ME",
+  apiKey:            "REPLACE_WITH_API_KEY",
   authDomain:        "africa-office.firebaseapp.com",
   projectId:         "africa-office",
   storageBucket:     "africa-office.appspot.com",
-  messagingSenderId: "REPLACE_ME",
-  appId:             "REPLACE_ME",
+  messagingSenderId: "485578644088",
+  appId:             "1:485578644088:web:9de92c0747468784946b8d",
 };
 
 firebase.initializeApp(firebaseConfig);
 
-// Expose globally
-window.db        = firebase.firestore();
-window.functions = firebase.app().functions('asia-northeast3');
+// Expose Firestore globally (no Functions needed — free Spark plan)
+window.db = firebase.firestore();

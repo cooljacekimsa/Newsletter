@@ -1,67 +1,47 @@
 'use strict';
 
 (function () {
-  const btnCrawl    = document.getElementById('btn-crawl');
-  const statusBox   = document.getElementById('crawl-status');
-  const statusText  = document.getElementById('crawl-status-text');
-  const resultBox   = document.getElementById('crawl-result');
-  const hoursBtns   = document.querySelectorAll('.hours-btn');
-  const customRow   = document.getElementById('custom-hours-row');
-  const customInput = document.getElementById('custom-hours-input');
+  const statsEl    = document.getElementById('crawl-stats');
+  const btnRefresh = document.getElementById('btn-refresh-crawl');
 
-  let selectedHours = 24;
-  let crawling = false;
-
-  // Hours selector
-  hoursBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      hoursBtns.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      if (btn.dataset.hours === 'custom') {
-        customRow.classList.remove('hidden');
-        selectedHours = parseInt(customInput.value) || 24;
-      } else {
-        customRow.classList.add('hidden');
-        selectedHours = parseInt(btn.dataset.hours);
-      }
-    });
-  });
-  customInput.addEventListener('input', () => {
-    selectedHours = parseInt(customInput.value) || 24;
-  });
-
-  btnCrawl.addEventListener('click', async () => {
-    if (crawling) return;
-    crawling = true;
-    btnCrawl.disabled = true;
-    btnCrawl.textContent = '수집 중...';
-    statusBox.classList.remove('hidden');
-    resultBox.classList.add('hidden');
-    statusText.textContent = `최근 ${selectedHours}시간 기사 수집 중...`;
-
+  async function load() {
+    statsEl.innerHTML = '<p class="placeholder">불러오는 중...</p>';
     try {
-      const fn = window.functions.httpsCallable('crawlNews');
-      const { data } = await fn({ hoursBack: selectedHours });
+      // Latest newsletter
+      const nlSnap = await window.db
+        .collection('newsletters')
+        .orderBy('createdAt', 'desc')
+        .limit(1)
+        .get();
 
-      statusBox.classList.add('hidden');
-      resultBox.classList.remove('hidden');
-      resultBox.innerHTML = `
-        <p class="result-success">✓ 수집 완료</p>
-        <p>수집 기사: <strong>${data.totalCrawled}건</strong></p>
-        <p>중복 제거 후: <strong>${data.articleCount}건</strong></p>
-        <p>뉴스레터 ID: <code>${data.newsletterId}</code></p>
+      if (nlSnap.empty) {
+        statsEl.innerHTML =
+          '<p class="placeholder">아직 수집된 기사가 없습니다.<br>아래 버튼으로 첫 수집을 실행하세요.</p>';
+        return;
+      }
+
+      const latest  = nlSnap.docs[0].data();
+      const lastDate = latest.createdAt?.toDate?.();
+      const dateStr  = lastDate ? lastDate.toLocaleString('ko-KR') : '알 수 없음';
+
+      // Total newsletter count
+      const allSnap = await window.db.collection('newsletters').get();
+
+      statsEl.innerHTML = `
+        <p><strong>마지막 수집:</strong> ${dateStr}</p>
+        <p><strong>최근 뉴스레터 기사:</strong> ${latest.articleCount ?? '-'}건
+           (수집 원본 ${latest.totalCrawled ?? '-'}건)</p>
+        <p><strong>총 뉴스레터 수:</strong> ${allSnap.size}건</p>
+        <p style="font-size:12px;color:#9aa0a6;margin-top:8px;">
+          수집 출처: ${latest.source === 'github-actions' ? 'GitHub Actions (자동/수동)' : latest.source ?? '-'}
+        </p>
       `;
-
-      // Auto-refresh newsletter tab
-      window.nlView?.load();
     } catch (e) {
-      statusBox.classList.add('hidden');
-      resultBox.classList.remove('hidden');
-      resultBox.innerHTML = `<p class="result-error">오류: ${e.message}</p>`;
+      statsEl.innerHTML = `<p class="result-error">오류: ${e.message}</p>`;
     }
+  }
 
-    crawling = false;
-    btnCrawl.disabled = false;
-    btnCrawl.textContent = '수집 시작';
-  });
+  btnRefresh?.addEventListener('click', load);
+
+  window.crawlView = { load };
 })();

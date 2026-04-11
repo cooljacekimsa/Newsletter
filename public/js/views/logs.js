@@ -10,9 +10,22 @@
   async function load() {
     listEl.innerHTML = '<p class="placeholder">불러오는 중...</p>';
     try {
-      const fn = window.functions.httpsCallable('getLogs');
-      const { data } = await fn({ limit: 200 });
-      rawLogs = data;
+      const snap = await window.db
+        .collection('logs')
+        .orderBy('timestamp', 'desc')
+        .limit(200)
+        .get();
+
+      rawLogs = snap.docs.map(doc => {
+        const d = doc.data();
+        return {
+          id:        doc.id,
+          timestamp: d.timestamp?.toDate?.()?.toISOString() ?? null,
+          level:     d.level   ?? 'info',
+          message:   d.message ?? '',
+          url:       d.url     ?? null,
+        };
+      });
       render();
     } catch (e) {
       listEl.innerHTML = `<p class="placeholder result-error">오류: ${e.message}</p>`;
@@ -28,7 +41,7 @@
     rawLogs.forEach(log => {
       const div = document.createElement('div');
       div.className = 'log-item ' + (log.level === 'error' ? 'error' : 'info');
-      const ts = log.timestamp ? new Date(log.timestamp).toLocaleString('ko-KR') : '';
+      const ts     = log.timestamp ? new Date(log.timestamp).toLocaleString('ko-KR') : '';
       const urlPart = log.url ? `\n↳ ${log.url}` : '';
       div.innerHTML = `<span class="log-time">${ts}</span>  ${escHtml(log.message)}${escHtml(urlPart)}`;
       listEl.appendChild(div);
@@ -51,7 +64,7 @@
   });
 
   function escHtml(str) {
-    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
 
   window.logsView = { load };

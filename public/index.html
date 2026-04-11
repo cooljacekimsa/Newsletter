@@ -6,10 +6,9 @@
   <title>Africa News Newsletter</title>
   <link rel="stylesheet" href="/css/style.css" />
 
-  <!-- Firebase SDK (compat v9) -->
+  <!-- Firebase SDK (compat) — Hosting + Firestore only (free Spark plan) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-functions-compat.js"></script>
 </head>
 <body>
 
@@ -61,33 +60,35 @@
     <!-- Crawl Tab -->
     <section id="tab-crawl" class="tab-section hidden">
       <div class="section-header">
-        <h2>기사 수집</h2>
+        <h2>수집 현황</h2>
+        <button id="btn-refresh-crawl" class="btn btn-sm">새로고침</button>
       </div>
 
-      <div class="crawl-controls card">
-        <label class="field-label">수집 기간</label>
-        <div class="hours-row">
-          <button class="hours-btn active" data-hours="24">24시간</button>
-          <button class="hours-btn" data-hours="48">48시간</button>
-          <button class="hours-btn" data-hours="72">72시간</button>
-          <button class="hours-btn" data-hours="custom">직접입력</button>
-        </div>
-        <div id="custom-hours-row" class="custom-hours hidden">
-          <input type="number" id="custom-hours-input" class="input" min="1" max="720" value="24" />
-          <span class="unit">시간</span>
-        </div>
+      <div id="crawl-stats" class="card">
+        <p class="placeholder">불러오는 중...</p>
       </div>
 
-      <button id="btn-crawl" class="btn btn-primary btn-full">
-        수집 시작
-      </button>
-
-      <div id="crawl-status" class="crawl-status hidden">
-        <div class="spinner"></div>
-        <span id="crawl-status-text">수집 중...</span>
+      <div class="card mt">
+        <p class="field-label">수동 수집 실행</p>
+        <p style="font-size:13px;color:var(--text-2);margin-bottom:10px;">
+          수집은 GitHub Actions에서 실행됩니다. 아래 링크를 눌러
+          <strong>Run workflow</strong> 버튼을 클릭하세요.
+        </p>
+        <a href="https://github.com/shaunyoo-ao/africa/actions/workflows/crawl.yml"
+           target="_blank" rel="noopener"
+           class="btn btn-primary btn-full"
+           style="display:block;text-align:center;text-decoration:none;padding:12px;">
+          GitHub Actions 열기 → 수동 실행
+        </a>
       </div>
 
-      <div id="crawl-result" class="crawl-result hidden card"></div>
+      <div class="card mt">
+        <p class="field-label">자동 수집 일정</p>
+        <p style="font-size:13px;color:var(--text-2);">매일 오전 8시 (한국 시간) 자동 수집</p>
+        <p style="font-size:12px;color:#9aa0a6;margin-top:4px;">
+          수집 기간·키워드는 <strong>설정</strong> 탭에서 변경 후 저장하세요.
+        </p>
+      </div>
     </section>
 
     <!-- Settings Tab -->

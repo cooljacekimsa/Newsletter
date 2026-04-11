@@ -13,12 +13,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Deploy to Firebase Hosting + Firestore rules
+      - name: Deploy to Firebase Hosting
         run: |
           echo "$FIREBASE_SA" > /tmp/sa.json
           GOOGLE_APPLICATION_CREDENTIALS=/tmp/sa.json \
           npx firebase-tools@latest deploy \
-            --only hosting,firestore \
+            --only hosting \
             --project africa-office \
             --non-interactive
           rm -f /tmp/sa.json

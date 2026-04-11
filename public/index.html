@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Africa News Newsletter</title>
+  <link rel="stylesheet" href="/css/style.css" />
+
+  <!-- Firebase SDK (compat v9) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-functions-compat.js"></script>
+</head>
+<body>
+
+  <!-- ── Header ──────────────────────────────────── -->
+  <header class="app-header">
+    <span class="logo">📰 뉴스레터</span>
+    <span class="subtitle" id="header-status"></span>
+  </header>
+
+  <!-- ── Tab Bar ─────────────────────────────────── -->
+  <nav class="tab-bar">
+    <button class="tab active" data-tab="newsletter">뉴스레터</button>
+    <button class="tab" data-tab="crawl">수집</button>
+    <button class="tab" data-tab="settings">설정</button>
+    <button class="tab" data-tab="logs">로그</button>
+  </nav>
+
+  <!-- ── Main Content ────────────────────────────── -->
+  <main class="content">
+
+    <!-- Newsletter Tab -->
+    <section id="tab-newsletter" class="tab-section active">
+      <div class="section-header">
+        <h2>뉴스레터</h2>
+        <button id="btn-refresh-nl" class="btn btn-sm">새로고침</button>
+      </div>
+
+      <!-- Newsletter list -->
+      <div id="nl-list" class="nl-list">
+        <p class="placeholder">수집을 실행하면 뉴스레터가 여기에 표시됩니다.</p>
+      </div>
+
+      <!-- Newsletter preview modal -->
+      <div id="nl-modal" class="modal hidden">
+        <div class="modal-inner">
+          <div class="modal-header">
+            <span id="modal-title" class="modal-title"></span>
+            <div class="modal-actions">
+              <button id="btn-copy-nl" class="btn btn-sm">복사</button>
+              <button id="btn-share-nl" class="btn btn-sm btn-secondary">공유</button>
+              <button id="btn-close-modal" class="btn btn-sm btn-ghost">✕</button>
+            </div>
+          </div>
+          <pre id="nl-content" class="nl-preview"></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- Crawl Tab -->
+    <section id="tab-crawl" class="tab-section hidden">
+      <div class="section-header">
+        <h2>기사 수집</h2>
+      </div>
+
+      <div class="crawl-controls card">
+        <label class="field-label">수집 기간</label>
+        <div class="hours-row">
+          <button class="hours-btn active" data-hours="24">24시간</button>
+          <button class="hours-btn" data-hours="48">48시간</button>
+          <button class="hours-btn" data-hours="72">72시간</button>
+          <button class="hours-btn" data-hours="custom">직접입력</button>
+        </div>
+        <div id="custom-hours-row" class="custom-hours hidden">
+          <input type="number" id="custom-hours-input" class="input" min="1" max="720" value="24" />
+          <span class="unit">시간</span>
+        </div>
+      </div>
+
+      <button id="btn-crawl" class="btn btn-primary btn-full">
+        수집 시작
+      </button>
+
+      <div id="crawl-status" class="crawl-status hidden">
+        <div class="spinner"></div>
+        <span id="crawl-status-text">수집 중...</span>
+      </div>
+
+      <div id="crawl-result" class="crawl-result hidden card"></div>
+    </section>
+
+    <!-- Settings Tab -->
+    <section id="tab-settings" class="tab-section hidden">
+      <div class="section-header">
+        <h2>설정</h2>
+        <button id="btn-save-settings" class="btn btn-sm btn-primary">저장</button>
+      </div>
+
+      <div class="card">
+        <label class="field-label">포함 키워드
+          <span class="hint">쉼표로 구분</span>
+        </label>
+        <input type="text" id="kw-include" class="input" placeholder="아프리카, 나이지리아, 에티오피아" />
+
+        <label class="field-label mt">포함 조건</label>
+        <div class="radio-row">
+          <label><input type="radio" name="kw-mode" value="AND" checked /> AND (모두 포함)</label>
+          <label><input type="radio" name="kw-mode" value="OR" /> OR (하나라도 포함)</label>
+        </div>
+
+        <label class="field-label mt">제외 키워드
+          <span class="hint">쉼표로 구분</span>
+        </label>
+        <input type="text" id="kw-exclude" class="input" placeholder="광고, 협찬" />
+      </div>
+
+      <div class="card mt">
+        <label class="field-label">언론사 우선순위
+          <span class="hint">줄 바꿈으로 구분 (위쪽이 높은 우선순위)</span>
+        </label>
+        <textarea id="publishers" class="input textarea" rows="8"></textarea>
+      </div>
+
+      <div class="card mt">
+        <label class="field-label">시드 URL
+          <span class="hint">줄 바꿈으로 구분</span>
+        </label>
+        <textarea id="seed-urls" class="input textarea" rows="4"></textarea>
+      </div>
+
+      <div class="card mt">
+        <label class="field-label">기본 수집 기간 (시간)</label>
+        <input type="number" id="hours-back" class="input" min="1" max="720" value="24" />
+
+        <label class="field-label mt">유사도 임계값
+          <span class="hint">0.0 – 1.0, 기본 0.75</span>
+        </label>
+        <input type="number" id="similarity-threshold" class="input" min="0" max="1" step="0.05" value="0.75" />
+
+        <label class="field-label mt toggle-label">
+          자동 수집 활성화
+          <label class="toggle">
+            <input type="checkbox" id="schedule-enabled" checked />
+            <span class="toggle-slider"></span>
+          </label>
+        </label>
+      </div>
+
+      <div id="settings-msg" class="msg hidden"></div>
+    </section>
+
+    <!-- Logs Tab -->
+    <section id="tab-logs" class="tab-section hidden">
+      <div class="section-header">
+        <h2>로그</h2>
+        <div>
+          <button id="btn-copy-logs" class="btn btn-sm">전체 복사</button>
+          <button id="btn-refresh-logs" class="btn btn-sm btn-secondary">새로고침</button>
+        </div>
+      </div>
+      <div id="log-list" class="log-list">
+        <p class="placeholder">로그가 없습니다.</p>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Scripts -->
+  <script src="/js/firebase-init.js"></script>
+  <script src="/js/views/settings.js"></script>
+  <script src="/js/views/crawl.js"></script>
+  <script src="/js/views/newsletter.js"></script>
+  <script src="/js/views/logs.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>

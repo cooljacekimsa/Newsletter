@@ -1,0 +1,28 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Settings: browser can read & write (no auth in MVP)
+    match /settings/{docId} {
+      allow read, write: if true;
+    }
+
+    // Articles: browser read-only; Functions (admin SDK) bypasses rules
+    match /articles/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Newsletters: browser read-only
+    match /newsletters/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Logs: browser read-only
+    match /logs/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
+  }
+}

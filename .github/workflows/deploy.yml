@@ -1,0 +1,34 @@
+name: Deploy to Firebase
+
+on:
+  push:
+    branches:
+      - claude/deploy-firebase-MxySo
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: functions/package-lock.json
+
+      - name: Install Functions dependencies
+        run: npm ci
+        working-directory: functions
+
+      - name: Deploy to Firebase (Hosting + Functions + Firestore rules)
+        run: |
+          npx firebase-tools@latest deploy \
+            --only hosting,functions,firestore \
+            --project africa-office \
+            --non-interactive
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}

@@ -23,6 +23,10 @@ const DEFAULT_NOISE_PHRASES = [
   '재판매 및 db 금지',
 ];
 
+// 연합뉴스 등 통신사 기자 바이라인 패턴
+// 예: "(서울=연합뉴스) 이정훈 기자 = " / "(세종=연합뉴스) 이준서 기자 = "
+const BYLINE_RE = /^\([^)]{1,40}\)\s{0,3}[가-힣·\s,]{1,20}기자\s*=\s*/;
+
 const domainLastRequest = {};
 
 async function waitForRateLimit(domain) {
@@ -72,27 +76,51 @@ function parsePublishedTime(html) {
 }
 
 /**
- * 단락 배열을 정제합니다:
+ * 단락 배열을 4단계로 정제합니다:
  * 1) 노이즈 문구가 포함된 단락 제거
- * 2) 중복 단락 제거 (첫 등장만 유지)
+ * 2) 사진 캡션 제거 (기자 코드 이메일 포함 단락)
+ * 3) 바이라인 이후 전문 추출 (연합뉴스 요약+전문 중복 방지)
+ * 4) 중복 단락 제거 (정확 일치 + 앞 30자 근사 중복)
  */
 function cleanParagraphs(rawParagraphs, noisePhrases) {
   const noiseList = (noisePhrases && noisePhrases.length)
     ? noisePhrases
     : DEFAULT_NOISE_PHRASES;
 
-  // 노이즈 필터 (대소문자 무시)
-  const filtered = rawParagraphs.filter(p => {
+  // STEP 1: 노이즈 문구 필터 (대소문자 무시)
+  let result = rawParagraphs.filter(p => {
     const lower = p.toLowerCase();
     return !noiseList.some(phrase => lower.includes(phrase.toLowerCase()));
   });
 
-  // 중복 제거 — 공백 정규화 후 비교, 첫 등장만 유지
-  const seen = new Set();
-  return filtered.filter(p => {
-    const key = p.replace(/\s+/g, ' ').trim();
-    if (seen.has(key)) return false;
-    seen.add(key);
+  // STEP 2: 사진 캡션 제거
+  // 기자 코드 이메일(예: uwg806@yna.co.kr)이 포함된 단락은 캡션으로 간주
+  result = result.filter(p => !/@[a-zA-Z0-9]+\.[a-zA-Z]{2,}/.test(p));
+
+  // STEP 3: 바이라인 이후 전문 추출
+  // "(서울=연합뉴스) 이정훈 기자 = ..." 형태의 바이라인이 발견되면
+  // 그 이전의 요약 단락을 버리고 바이라인 이후 전문만 사용.
+  // 바이라인 접두어 자체는 제거해 본문이 내용으로 바로 시작하게 함.
+  const bylineIdx = result.findIndex(p => BYLINE_RE.test(p));
+  if (bylineIdx !== -1) {
+    result = [
+      result[bylineIdx].replace(BYLINE_RE, '').trim(),
+      ...result.slice(bylineIdx + 1),
+    ].filter(Boolean);
+  }
+
+  // STEP 4: 중복 제거 — 정확 일치 + 앞 30자 근사 중복
+  // 약간 표현이 다른 동일 내용(예: "자유무역협정" vs "자유무역협정(FTA)")도 제거
+  const seenFull = new Set();
+  const seenPrefix = new Set();
+  return result.filter(p => {
+    if (!p || p.length < 10) return false;
+    const full = p.replace(/\s+/g, ' ').trim();
+    const prefix = full.substring(0, 30);
+    if (seenFull.has(full)) return false;
+    if (prefix.length >= 25 && seenPrefix.has(prefix)) return false;
+    seenFull.add(full);
+    if (prefix.length >= 25) seenPrefix.add(prefix);
     return true;
   });
 }

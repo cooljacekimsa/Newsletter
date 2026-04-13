@@ -11,6 +11,9 @@
   const btnCopy    = document.getElementById('btn-copy-nl');
   const btnShare   = document.getElementById('btn-share-nl');
 
+  const ARTICLE_SEP = '\n\n' + '─'.repeat(40) + '\n\n';
+  const CHAR_LIMIT  = 2990; // 3000에서 "[N/M부]\n\n" 레이블 여유분 제외
+
   let newsletters = [];
 
   async function load() {
@@ -105,9 +108,64 @@
     }
   }
 
+  function splitContent(content) {
+    if (content.length <= 3000) return [content];
+    const articles = content.split(ARTICLE_SEP);
+    const parts = [];
+    let current = [];
+    let currentLen = 0;
+    for (const article of articles) {
+      const addLen = (current.length > 0 ? ARTICLE_SEP.length : 0) + article.length;
+      if (currentLen + addLen > CHAR_LIMIT && current.length > 0) {
+        parts.push(current.join(ARTICLE_SEP));
+        current = [article];
+        currentLen = article.length;
+      } else {
+        current.push(article);
+        currentLen += addLen;
+      }
+    }
+    if (current.length > 0) parts.push(current.join(ARTICLE_SEP));
+    return parts;
+  }
+
+  function renderSplitBar(barEl, parts) {
+    const total = parts.length;
+    barEl.innerHTML = `<span class="split-bar-label">${total}부로 나눠 복사:</span>`;
+    parts.forEach((part, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'btn btn-sm btn-split-part';
+      btn.textContent = `${i + 1}부`;
+      btn.title = `${part.length}자`;
+      btn.addEventListener('click', async () => {
+        const labeled = `[${i + 1}/${total}부]\n\n${part}`;
+        try {
+          await navigator.clipboard.writeText(labeled);
+          btn.textContent = `${i + 1}부 ✓`;
+          setTimeout(() => { btn.textContent = `${i + 1}부`; }, 2000);
+        } catch {
+          fallbackCopy(labeled);
+        }
+      });
+      barEl.appendChild(btn);
+    });
+  }
+
   function openModal(nl) {
+    const content = nl.content || '';
     modalTitle.textContent = `뉴스레터 ${formatDate(nl.createdAt)}`;
-    contentEl.textContent  = nl.content || '';
+    contentEl.textContent  = content;
+
+    const splitBarEl = document.getElementById('nl-split-bar');
+    const parts = splitContent(content);
+    if (parts.length > 1) {
+      renderSplitBar(splitBarEl, parts);
+      splitBarEl.classList.remove('hidden');
+    } else {
+      splitBarEl.innerHTML = '';
+      splitBarEl.classList.add('hidden');
+    }
+
     modal.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
   }

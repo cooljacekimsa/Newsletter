@@ -221,6 +221,21 @@ body {
   font-size: 13px; line-height: 1.9; white-space: pre-wrap; word-break: break-word;
 }
 
+/* ── Newsletter Split Bar ─────────────────────────────── */
+.split-bar {
+  padding: 8px 16px; background: #fffde7;
+  border-bottom: 1px solid #f9a825;
+  display: flex; align-items: center; gap: 8px;
+  flex-shrink: 0; flex-wrap: wrap; font-size: 13px;
+}
+.split-bar-label { color: #5f4b00; font-weight: 500; white-space: nowrap; }
+.btn-split-part {
+  background: #fff8e1; border: 1px solid #f9a825 !important;
+  color: #5f4b00 !important; border-radius: 4px;
+  padding: 3px 10px !important; font-size: 12px; cursor: pointer;
+}
+.btn-split-part:hover { background: #fff3cd; }
+
 /* ── Log List ─────────────────────────────────────────── */
 .log-list { display: flex; flex-direction: column; gap: 6px; }
 .log-item {

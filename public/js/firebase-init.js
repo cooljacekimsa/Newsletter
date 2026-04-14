@@ -19,5 +19,6 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 
-// Expose Firestore globally (no Functions needed — free Spark plan)
-window.db = firebase.firestore();
+// Expose Firestore and Auth globally (no Functions needed — free Spark plan)
+window.db   = firebase.firestore();
+window.auth = firebase.auth();

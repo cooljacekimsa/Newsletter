@@ -6,9 +6,10 @@
   <title>Africa 뉴스레터</title>
   <link rel="stylesheet" href="/css/style.css" />
 
-  <!-- Firebase SDK (compat) — Hosting + Firestore only (free Spark plan) -->
+  <!-- Firebase SDK (compat) — Hosting + Firestore + Auth (free Spark plan) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 </head>
 <body>
 
@@ -24,6 +25,18 @@
     <button class="tab" data-tab="settings">설정</button>
     <button class="tab" data-tab="logs">로그</button>
   </nav>
+
+  <!-- ── Login Overlay ───────────────────────────── -->
+  <div id="login-overlay" class="login-overlay hidden">
+    <div class="login-card">
+      <div class="login-logo">📰 뉴스레터</div>
+      <p class="login-desc">Google 계정으로 로그인하세요</p>
+      <button id="btn-google-signin" class="btn btn-primary btn-full" style="margin-top:0;">
+        Google로 로그인
+      </button>
+      <p id="login-error" class="login-error hidden"></p>
+    </div>
+  </div>
 
   <!-- ── Main Content ────────────────────────────── -->
   <main class="content">
@@ -183,12 +196,13 @@
 
   </main>
 
-  <!-- Scripts (v=7) -->
-  <script src="/js/firebase-init.js?v=7"></script>
-  <script src="/js/views/settings.js?v=7"></script>
-  <script src="/js/views/crawl.js?v=7"></script>
-  <script src="/js/views/newsletter.js?v=7"></script>
-  <script src="/js/views/logs.js?v=7"></script>
-  <script src="/js/app.js?v=7"></script>
+  <!-- Scripts (v=8) -->
+  <script src="/js/firebase-init.js?v=8"></script>
+  <script src="/js/views/auth.js?v=8"></script>
+  <script src="/js/views/settings.js?v=8"></script>
+  <script src="/js/views/crawl.js?v=8"></script>
+  <script src="/js/views/newsletter.js?v=8"></script>
+  <script src="/js/views/logs.js?v=8"></script>
+  <script src="/js/app.js?v=8"></script>
 </body>
 </html>

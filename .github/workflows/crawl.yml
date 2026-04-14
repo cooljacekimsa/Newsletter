@@ -1,9 +1,12 @@
 name: Crawl News
 
 on:
-  # Weekdays at 03:00 UTC = 12:00 KST (Mon–Fri)
+  # Run every hour Mon-Fri 06:00–20:00 UTC (= 08:00–22:00 SAST)
+  # The actual fire time is controlled by 'scheduleHour' stored in Firestore.
+  # crawl.js compares current SAST hour against scheduleHour and exits early
+  # when it is not the right time, so only one run per day does real work.
   schedule:
-    - cron: '0 3 * * 1-5'
+    - cron: '0 6-20 * * 1-5'
 
   # Manual trigger from GitHub Actions UI
   workflow_dispatch:

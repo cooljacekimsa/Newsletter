@@ -54,6 +54,26 @@ async function main() {
   const cliHours = process.argv[2] ? parseInt(process.argv[2]) : null;
   if (cliHours && !isNaN(cliHours)) settings.hoursBack = cliHours;
 
+  // ── Schedule gate ──────────────────────────────────────────────────────────
+  // workflow_dispatch (manual) always runs.
+  // schedule triggers run every hour — exit early unless it's the right time.
+  const isManual = process.env.GITHUB_EVENT_NAME === 'workflow_dispatch';
+  if (!isManual) {
+    if (settings.scheduleEnabled === false) {
+      await writeLog('info', '자동 수집 비활성화 상태 — 종료');
+      process.exit(0);
+    }
+    // SAST = UTC+2, no DST
+    const nowSAST = new Date(Date.now() + 2 * 3600 * 1000);
+    const currentHour = nowSAST.getUTCHours();
+    const targetHour  = Number.isInteger(settings.scheduleHour) ? settings.scheduleHour : 9;
+    await writeLog('info', `Schedule check: 현재 SAST ${currentHour}시 / 설정 ${targetHour}시`);
+    if (currentHour !== targetHour) {
+      process.exit(0);
+    }
+  }
+  // ───────────────────────────────────────────────────────────────────────────
+
   await writeLog('info', `Crawl started — hoursBack=${settings.hoursBack}, seedUrls=${JSON.stringify(settings.seedUrls)}`);
 
   // 1. Crawl

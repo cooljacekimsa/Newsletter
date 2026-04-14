@@ -8,8 +8,10 @@
   const noiseEl       = document.getElementById('noise-phrases');
   const hoursBackEl   = document.getElementById('hours-back');
   const thresholdEl   = document.getElementById('similarity-threshold');
-  const scheduleEl    = document.getElementById('schedule-enabled');
-  const btnSave       = document.getElementById('btn-save-settings');
+  const scheduleEl      = document.getElementById('schedule-enabled');
+  const scheduleHourEl  = document.getElementById('schedule-hour');
+  const scheduleUtcHint = document.getElementById('schedule-utc-hint');
+  const btnSave         = document.getElementById('btn-save-settings');
   const msgEl         = document.getElementById('settings-msg');
 
   // Keyword groups
@@ -65,9 +67,11 @@
     ].join('\n');
     seedUrlsEl.value   = RECOMMENDED_SEED_URLS.join('\n');
     noiseEl.value      = DEFAULT_NOISE.join('\n');
-    hoursBackEl.value  = '24';
-    thresholdEl.value  = '0.75';
-    scheduleEl.checked = true;
+    hoursBackEl.value      = '24';
+    thresholdEl.value      = '0.75';
+    scheduleEl.checked     = true;
+    scheduleHourEl.value   = '9';
+    updateUtcHint();
   }
 
   function applySettings(s) {
@@ -82,9 +86,11 @@
     noiseEl.value       = (s.noisePhrases && s.noisePhrases.length)
       ? s.noisePhrases.join('\n')
       : DEFAULT_NOISE.join('\n');
-    hoursBackEl.value   = s.hoursBack ?? 24;
-    thresholdEl.value   = s.similarityThreshold ?? 0.75;
-    scheduleEl.checked  = s.scheduleEnabled !== false;
+    hoursBackEl.value      = s.hoursBack ?? 24;
+    thresholdEl.value      = s.similarityThreshold ?? 0.75;
+    scheduleEl.checked     = s.scheduleEnabled !== false;
+    scheduleHourEl.value   = s.scheduleHour ?? 9;
+    updateUtcHint();
   }
 
   function readSettings() {
@@ -101,8 +107,17 @@
       hoursBack:    parseInt(hoursBackEl.value)    || 24,
       similarityThreshold: parseFloat(thresholdEl.value) || 0.75,
       scheduleEnabled: scheduleEl.checked,
+      scheduleHour:    parseInt(scheduleHourEl.value) || 9,
     };
   }
+
+  function updateUtcHint() {
+    const sast = parseInt(scheduleHourEl.value) || 9;
+    const utc  = (sast - 2 + 24) % 24;
+    scheduleUtcHint.textContent = String(utc).padStart(2, '0') + ':00';
+  }
+
+  scheduleHourEl.addEventListener('change', updateUtcHint);
 
   // ── Keyword Groups ──────────────────────────────────────
 

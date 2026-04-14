@@ -21,7 +21,6 @@
   <!-- ── Tab Bar ─────────────────────────────────── -->
   <nav class="tab-bar">
     <button class="tab active" data-tab="newsletter">뉴스레터</button>
-    <button class="tab" data-tab="crawl">수집</button>
     <button class="tab" data-tab="settings">설정</button>
     <button class="tab" data-tab="logs">로그</button>
   </nav>
@@ -31,6 +30,14 @@
 
     <!-- Newsletter Tab -->
     <section id="tab-newsletter" class="tab-section active">
+
+      <!-- Compact crawl bar -->
+      <div class="nl-crawl-bar">
+        <span id="nl-stats-text" class="nl-stats-text">불러오는 중...</span>
+        <button id="btn-run-crawl" class="btn btn-sm btn-primary">수집</button>
+      </div>
+      <div id="crawl-trigger-msg" class="crawl-msg hidden"></div>
+
       <div class="section-header">
         <h2>뉴스레터</h2>
         <div style="display:flex;gap:6px;">
@@ -58,47 +65,6 @@
           <div id="nl-split-bar" class="split-bar hidden"></div>
           <pre id="nl-content" class="nl-preview"></pre>
         </div>
-      </div>
-    </section>
-
-    <!-- Crawl Tab -->
-    <section id="tab-crawl" class="tab-section hidden">
-      <div class="section-header">
-        <h2>수집 현황</h2>
-        <button id="btn-refresh-crawl" class="btn btn-sm">새로고침</button>
-      </div>
-
-      <div id="crawl-stats" class="card">
-        <p class="placeholder">불러오는 중...</p>
-      </div>
-
-      <!-- Test crawl buttons -->
-      <div class="card mt">
-        <p class="field-label">테스트 수집</p>
-        <p style="font-size:12px;color:#9aa0a6;margin-bottom:10px;">
-          GitHub Personal Access Token(PAT)을 저장하면 앱에서 직접 수집을 실행할 수 있습니다.
-          PAT는 이 기기의 localStorage에만 저장됩니다.
-        </p>
-        <div style="display:flex;gap:8px;margin-bottom:8px;">
-          <input type="password" id="gh-pat-input" class="input"
-                 placeholder="ghp_xxxx  (workflow 권한 필요)"
-                 style="flex:1;" />
-          <button id="btn-save-pat" class="btn btn-sm btn-secondary" style="flex-shrink:0;">저장</button>
-        </div>
-        <p id="pat-status" style="font-size:12px;color:#9aa0a6;margin-bottom:10px;"></p>
-        <div style="display:flex;gap:8px;">
-          <button id="btn-crawl-24h" class="btn btn-primary" style="flex:1;">24시간 수집</button>
-          <button id="btn-crawl-48h" class="btn btn-primary" style="flex:1;">48시간 수집</button>
-        </div>
-        <div id="trigger-result" style="margin-top:10px;font-size:13px;"></div>
-      </div>
-
-      <div class="card mt">
-        <p class="field-label">자동 수집 일정</p>
-        <p style="font-size:13px;color:var(--text-2);">평일 오후 12시 (한국 시간) 자동 수집</p>
-        <p style="font-size:12px;color:#9aa0a6;margin-top:4px;">
-          수집 기간·키워드는 <strong>설정</strong> 탭에서 변경 후 저장하세요.
-        </p>
       </div>
     </section>
 
@@ -180,41 +146,21 @@
           <span class="hint">0.0 – 1.0, 기본 0.75</span>
         </label>
         <input type="number" id="similarity-threshold" class="input" min="0" max="1" step="0.05" value="0.75" />
+      </div>
 
-        <label class="field-label mt toggle-label">
-          자동 수집 활성화
-          <label class="toggle">
-            <input type="checkbox" id="schedule-enabled" checked />
-            <span class="toggle-slider"></span>
-          </label>
+      <div class="card mt">
+        <label class="field-label">GitHub PAT
+          <span class="hint">수집 실행 권한</span>
         </label>
-
-        <label class="field-label mt">수집 시간
-          <span class="hint">24시간 형식</span>
-        </label>
-        <div style="display:flex;align-items:center;gap:8px;">
-          <input type="time" id="schedule-time" class="input" value="09:00"
-                 style="width:130px;height:38px;padding:6px 10px;" />
-          <span style="font-size:12px;color:var(--text-2);">= UTC <span id="schedule-utc-hint">07:00</span></span>
+        <p style="font-size:12px;color:#9aa0a6;margin-bottom:8px;">
+          GitHub Personal Access Token (workflow 권한 필요). 이 기기의 localStorage에만 저장됩니다.
+        </p>
+        <div style="display:flex;gap:8px;">
+          <input type="password" id="gh-pat-input" class="input"
+                 placeholder="ghp_xxxx" />
+          <button id="btn-save-pat" class="btn btn-sm btn-secondary" style="flex-shrink:0;">저장</button>
         </div>
-
-        <label class="field-label mt">시간대</label>
-        <select id="schedule-timezone" class="input" style="height:38px;padding:6px 10px;">
-          <option value="Africa/Johannesburg">남아공 (SAST, UTC+2)</option>
-          <option value="Asia/Seoul">한국 (KST, UTC+9)</option>
-          <option value="Asia/Tokyo">일본 (JST, UTC+9)</option>
-          <option value="Europe/London">영국 (GMT/BST)</option>
-          <option value="Europe/Paris">유럽 중부 (CET, UTC+1)</option>
-          <option value="UTC">UTC</option>
-          <option value="America/New_York">미국 동부 (ET)</option>
-          <option value="America/Los_Angeles">미국 서부 (PT)</option>
-        </select>
-
-        <label class="field-label mt">실행 요일</label>
-        <div class="radio-row">
-          <label><input type="radio" name="schedule-days" value="weekdays" checked /> 평일만 (월–금)</label>
-          <label><input type="radio" name="schedule-days" value="daily" /> 매일 (월–일)</label>
-        </div>
+        <p id="pat-status" style="font-size:12px;margin-top:6px;color:#9aa0a6;"></p>
       </div>
 
       <div id="settings-msg" class="msg hidden"></div>
@@ -237,12 +183,12 @@
 
   </main>
 
-  <!-- Scripts (v=3 cache bust) -->
-  <script src="/js/firebase-init.js?v=6"></script>
-  <script src="/js/views/settings.js?v=6"></script>
-  <script src="/js/views/crawl.js?v=6"></script>
-  <script src="/js/views/newsletter.js?v=6"></script>
-  <script src="/js/views/logs.js?v=6"></script>
-  <script src="/js/app.js?v=6"></script>
+  <!-- Scripts (v=7) -->
+  <script src="/js/firebase-init.js?v=7"></script>
+  <script src="/js/views/settings.js?v=7"></script>
+  <script src="/js/views/crawl.js?v=7"></script>
+  <script src="/js/views/newsletter.js?v=7"></script>
+  <script src="/js/views/logs.js?v=7"></script>
+  <script src="/js/app.js?v=7"></script>
 </body>
 </html>

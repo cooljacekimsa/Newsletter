@@ -147,36 +147,23 @@ body {
 .toggle input:checked + .toggle-slider { background: var(--primary); }
 .toggle input:checked + .toggle-slider::before { transform: translateX(18px); }
 
-/* ── Hours Selector ───────────────────────────────────── */
-.hours-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
-.hours-btn {
-  padding: 6px 14px; border-radius: 20px;
-  border: 1px solid var(--border);
-  background: var(--surface); color: var(--text-2);
-  font-size: 13px; cursor: pointer;
-  transition: all .12s;
-}
-.hours-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
-.custom-hours { display: flex; align-items: center; gap: 8px; }
-.custom-hours .input { width: 100px; }
-.unit { font-size: 13px; color: var(--text-2); }
 .hidden { display: none !important; }
 
-/* ── Crawl Status ─────────────────────────────────────── */
-.crawl-status {
-  display: flex; align-items: center; gap: 12px;
-  padding: 14px; margin-top: 12px;
-  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+/* ── Newsletter Crawl Bar ─────────────────────────────── */
+.nl-crawl-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px; margin-bottom: 10px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow);
 }
-.spinner {
-  width: 20px; height: 20px; border-radius: 50%;
-  border: 3px solid #e8eaed; border-top-color: var(--primary);
-  animation: spin .7s linear infinite; flex-shrink: 0;
+.nl-stats-text { font-size: 12px; color: var(--text-2); }
+.crawl-msg {
+  padding: 8px 12px; border-radius: 6px;
+  font-size: 12px; margin-bottom: 10px;
 }
-@keyframes spin { to { transform: rotate(360deg); } }
-
-.crawl-result { font-size: 14px; line-height: 1.7; }
-.result-success { color: var(--success); font-weight: 600; }
+.crawl-msg.success { background: #e6f4ea; color: var(--success); }
+.crawl-msg.error   { background: #fce8e6; color: var(--danger); }
+.crawl-msg.info    { background: #e8f0fe; color: #174ea6; }
 .result-error { color: var(--danger); }
 
 /* ── Newsletter List ──────────────────────────────────── */

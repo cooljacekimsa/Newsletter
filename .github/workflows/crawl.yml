@@ -1,17 +1,11 @@
 name: Crawl News
 
 on:
-  # Runs every 30 min, 06:00–21:00 UTC (= 08:00–23:00 SAST).
-  # The actual fire time/timezone/days are controlled via Firestore (settings/global).
-  # crawl.js exits early unless the current local time falls in the target 30-min slot.
-  schedule:
-    - cron: '*/30 6-21 * * *'
-
-  # Manual trigger from GitHub Actions UI
+  # Manual trigger only — triggered from the app via GitHub API (workflow_dispatch)
   workflow_dispatch:
     inputs:
       hours_back:
-        description: '수집 기간 (시간, 기본값: Firestore 설정 사용)'
+        description: '수집 기간 (시간)'
         required: false
         default: ''
 

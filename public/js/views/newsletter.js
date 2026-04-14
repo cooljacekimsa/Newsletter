@@ -1,15 +1,18 @@
 'use strict';
 
 (function () {
-  const listEl     = document.getElementById('nl-list');
-  const modal      = document.getElementById('nl-modal');
-  const modalTitle = document.getElementById('modal-title');
-  const contentEl  = document.getElementById('nl-content');
-  const btnRefresh = document.getElementById('btn-refresh-nl');
-  const btnDelAll  = document.getElementById('btn-delete-all-nl');
-  const btnClose   = document.getElementById('btn-close-modal');
-  const btnCopy    = document.getElementById('btn-copy-nl');
-  const btnShare   = document.getElementById('btn-share-nl');
+  const listEl      = document.getElementById('nl-list');
+  const modal       = document.getElementById('nl-modal');
+  const modalTitle  = document.getElementById('modal-title');
+  const contentEl   = document.getElementById('nl-content');
+  const btnRefresh  = document.getElementById('btn-refresh-nl');
+  const btnDelAll   = document.getElementById('btn-delete-all-nl');
+  const btnClose    = document.getElementById('btn-close-modal');
+  const btnCopy     = document.getElementById('btn-copy-nl');
+  const btnShare    = document.getElementById('btn-share-nl');
+  const statsTextEl = document.getElementById('nl-stats-text');
+  const btnRunCrawl = document.getElementById('btn-run-crawl');
+  const crawlMsgEl  = document.getElementById('crawl-trigger-msg');
 
   const ARTICLE_SEP = '\n\n' + '─'.repeat(40) + '\n\n';
   const CHAR_LIMIT  = 2990; // 3000에서 "[N/M부]\n\n" 레이블 여유분 제외
@@ -37,6 +40,7 @@
         };
       });
       render();
+      updateStatsBar();
     } catch (e) {
       listEl.innerHTML = `<p class="placeholder result-error">오류: ${e.message}</p>`;
     }
@@ -50,10 +54,41 @@
     });
   }
 
+  function updateStatsBar() {
+    if (!newsletters.length) {
+      statsTextEl.textContent = '수집된 뉴스레터 없음';
+      return;
+    }
+    const nl = newsletters[0];
+    const d  = nl.createdAt
+      ? new Date(nl.createdAt).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+      : '날짜 없음';
+    statsTextEl.textContent = `마지막 수집: ${d} · ${nl.articleCount}건`;
+  }
+
+  // ── 수집 트리거 ──────────────────────────────────────────
+  btnRunCrawl.addEventListener('click', async () => {
+    btnRunCrawl.disabled = true;
+    let hoursBack = 24;
+    try {
+      const doc = await window.db.collection('settings').doc('global').get();
+      if (doc.exists) hoursBack = doc.data().hoursBack || 24;
+    } catch { /* use default */ }
+
+    window.crawlView?.trigger(hoursBack, (msg, type) => {
+      crawlMsgEl.textContent = msg;
+      crawlMsgEl.className   = `crawl-msg ${type}`;
+      crawlMsgEl.classList.remove('hidden');
+      if (type !== 'info') {
+        setTimeout(() => crawlMsgEl.classList.add('hidden'), 6000);
+        btnRunCrawl.disabled = false;
+      }
+    });
+  });
+
   function render() {
     if (!newsletters.length) {
-      listEl.innerHTML =
-        '<p class="placeholder">수집된 뉴스레터가 없습니다.<br>GitHub Actions에서 수집을 실행하세요.</p>';
+      listEl.innerHTML = '<p class="placeholder">수집된 뉴스레터가 없습니다.</p>';
       return;
     }
     listEl.innerHTML = '';

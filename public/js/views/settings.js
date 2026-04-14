@@ -1,19 +1,15 @@
 'use strict';
 
 (function () {
-  const kwInclude     = document.getElementById('kw-include');
-  const kwExclude     = document.getElementById('kw-exclude');
-  const publishersEl  = document.getElementById('publishers');
-  const seedUrlsEl    = document.getElementById('seed-urls');
-  const noiseEl       = document.getElementById('noise-phrases');
-  const hoursBackEl   = document.getElementById('hours-back');
-  const thresholdEl   = document.getElementById('similarity-threshold');
-  const scheduleEl      = document.getElementById('schedule-enabled');
-  const scheduleTimeEl  = document.getElementById('schedule-time');
-  const scheduleTzEl    = document.getElementById('schedule-timezone');
-  const scheduleUtcHint = document.getElementById('schedule-utc-hint');
-  const btnSave         = document.getElementById('btn-save-settings');
-  const msgEl         = document.getElementById('settings-msg');
+  const kwInclude    = document.getElementById('kw-include');
+  const kwExclude    = document.getElementById('kw-exclude');
+  const publishersEl = document.getElementById('publishers');
+  const seedUrlsEl   = document.getElementById('seed-urls');
+  const noiseEl      = document.getElementById('noise-phrases');
+  const hoursBackEl  = document.getElementById('hours-back');
+  const thresholdEl  = document.getElementById('similarity-threshold');
+  const btnSave      = document.getElementById('btn-save-settings');
+  const msgEl        = document.getElementById('settings-msg');
 
   // Keyword groups
   const kwGroupSelect  = document.getElementById('kw-group-select');
@@ -23,6 +19,13 @@
 
   // Recommended seed URLs button
   const btnAddUrls = document.getElementById('btn-add-recommended-urls');
+
+  // PAT
+  const patInput   = document.getElementById('gh-pat-input');
+  const btnSavePat = document.getElementById('btn-save-pat');
+  const patStatus  = document.getElementById('pat-status');
+
+  const GH_PAT_KEY = 'gh_pat_africa';
 
   const DEFAULT_NOISE = [
     '제보는 카카오톡',
@@ -59,6 +62,7 @@
     } catch (e) {
       showMsg('설정을 불러오지 못했습니다: ' + e.message, 'error');
     }
+    loadPat();
   }
 
   function applyDefaults() {
@@ -66,15 +70,10 @@
       '연합뉴스', 'KBS', 'MBC', 'SBS', '중앙일보',
       '한겨레', '한국일보', '조선일보', '동아일보', '경향신문',
     ].join('\n');
-    seedUrlsEl.value   = RECOMMENDED_SEED_URLS.join('\n');
-    noiseEl.value      = DEFAULT_NOISE.join('\n');
-    hoursBackEl.value    = '24';
-    thresholdEl.value    = '0.75';
-    scheduleEl.checked   = true;
-    scheduleTimeEl.value = '09:00';
-    scheduleTzEl.value   = 'Africa/Johannesburg';
-    setScheduleDays('weekdays');
-    updateUtcHint();
+    seedUrlsEl.value  = RECOMMENDED_SEED_URLS.join('\n');
+    noiseEl.value     = DEFAULT_NOISE.join('\n');
+    hoursBackEl.value = '24';
+    thresholdEl.value = '0.75';
   }
 
   function applySettings(s) {
@@ -84,18 +83,13 @@
     const modeEl = document.querySelector(`input[name="kw-mode"][value="${kw.mode || 'AND'}"]`);
     if (modeEl) modeEl.checked = true;
 
-    publishersEl.value  = (s.publishers   || []).join('\n');
-    seedUrlsEl.value    = (s.seedUrls     || []).join('\n');
-    noiseEl.value       = (s.noisePhrases && s.noisePhrases.length)
+    publishersEl.value = (s.publishers  || []).join('\n');
+    seedUrlsEl.value   = (s.seedUrls    || []).join('\n');
+    noiseEl.value      = (s.noisePhrases && s.noisePhrases.length)
       ? s.noisePhrases.join('\n')
       : DEFAULT_NOISE.join('\n');
-    hoursBackEl.value    = s.hoursBack ?? 24;
-    thresholdEl.value    = s.similarityThreshold ?? 0.75;
-    scheduleEl.checked   = s.scheduleEnabled !== false;
-    scheduleTimeEl.value = s.scheduleTime || '09:00';
-    scheduleTzEl.value   = s.scheduleTimezone || 'Africa/Johannesburg';
-    setScheduleDays(s.scheduleDays || 'weekdays');
-    updateUtcHint();
+    hoursBackEl.value  = s.hoursBack ?? 24;
+    thresholdEl.value  = s.similarityThreshold ?? 0.75;
   }
 
   function readSettings() {
@@ -109,46 +103,10 @@
       publishers:   publishersEl.value.split('\n').map(s => s.trim()).filter(Boolean),
       seedUrls:     seedUrlsEl.value.split('\n').map(s => s.trim()).filter(Boolean),
       noisePhrases: noiseEl.value.split('\n').map(s => s.trim()).filter(Boolean),
-      hoursBack:    parseInt(hoursBackEl.value)    || 24,
+      hoursBack:    parseInt(hoursBackEl.value) || 24,
       similarityThreshold: parseFloat(thresholdEl.value) || 0.75,
-      scheduleEnabled:  scheduleEl.checked,
-      scheduleTime:     scheduleTimeEl.value || '09:00',
-      scheduleTimezone: scheduleTzEl.value   || 'Africa/Johannesburg',
-      scheduleDays:     document.querySelector('input[name="schedule-days"]:checked')?.value || 'weekdays',
     };
   }
-
-  function setScheduleDays(val) {
-    const el = document.querySelector(`input[name="schedule-days"][value="${val}"]`);
-    if (el) el.checked = true;
-  }
-
-  // Compute UTC equivalent by comparing timezone-formatted time vs UTC
-  function getUtcOffsetMinutes(timezone) {
-    const d = new Date();
-    const local = new Date(d.toLocaleString('en-US', { timeZone: timezone }));
-    const utc   = new Date(d.toLocaleString('en-US', { timeZone: 'UTC' }));
-    return Math.round((local - utc) / 60000);
-  }
-
-  function updateUtcHint() {
-    const timeVal = scheduleTimeEl.value || '09:00';
-    const tz      = scheduleTzEl.value   || 'Africa/Johannesburg';
-    const [h, m]  = timeVal.split(':').map(Number);
-    try {
-      const offsetMin  = getUtcOffsetMinutes(tz);
-      const totalMin   = ((h * 60 + m - offsetMin) % 1440 + 1440) % 1440;
-      const utcH = Math.floor(totalMin / 60);
-      const utcM = totalMin % 60;
-      scheduleUtcHint.textContent =
-        String(utcH).padStart(2, '0') + ':' + String(utcM).padStart(2, '0');
-    } catch {
-      scheduleUtcHint.textContent = '--:--';
-    }
-  }
-
-  scheduleTimeEl.addEventListener('change', updateUtcHint);
-  scheduleTzEl.addEventListener('change', updateUtcHint);
 
   // ── Keyword Groups ──────────────────────────────────────
 
@@ -229,7 +187,7 @@
       return;
     }
     seedUrlsEl.value = [...current, ...toAdd].join('\n');
-    showMsg(`추천 URL ${toAdd.length}개 추가됨. 아래 "저장" 버튼을 눌러 적용하세요.`, 'success');
+    showMsg(`추천 URL ${toAdd.length}개 추가됨. "저장" 버튼을 눌러 적용하세요.`, 'success');
   });
 
   // ── Save Settings ───────────────────────────────────────
@@ -246,6 +204,32 @@
     btnSave.disabled = false;
     btnSave.textContent = '저장';
   });
+
+  // ── PAT Management ──────────────────────────────────────
+
+  function loadPat() {
+    const pat = localStorage.getItem(GH_PAT_KEY) || '';
+    if (pat) {
+      patInput.value = pat;
+      patStatus.textContent = '✓ PAT 저장됨 (이 기기 전용)';
+      patStatus.style.color = 'var(--success)';
+    }
+  }
+
+  btnSavePat.addEventListener('click', () => {
+    const val = patInput.value.trim();
+    if (!val) {
+      localStorage.removeItem(GH_PAT_KEY);
+      patStatus.textContent = 'PAT가 삭제되었습니다.';
+      patStatus.style.color = '#9aa0a6';
+      return;
+    }
+    localStorage.setItem(GH_PAT_KEY, val);
+    patStatus.textContent = '✓ PAT 저장됨 (이 기기 전용)';
+    patStatus.style.color = 'var(--success)';
+  });
+
+  // ── Helpers ─────────────────────────────────────────────
 
   function showMsg(text, type) {
     msgEl.textContent = text;

@@ -55,20 +55,51 @@ async function main() {
   if (cliHours && !isNaN(cliHours)) settings.hoursBack = cliHours;
 
   // ── Schedule gate ──────────────────────────────────────────────────────────
-  // workflow_dispatch (manual) always runs.
-  // schedule triggers run every hour — exit early unless it's the right time.
+  // workflow_dispatch (manual) always runs immediately.
+  // schedule triggers run every 30 min — exit early unless the target time
+  // falls in the current 30-minute slot and the day rule matches.
   const isManual = process.env.GITHUB_EVENT_NAME === 'workflow_dispatch';
   if (!isManual) {
     if (settings.scheduleEnabled === false) {
       await writeLog('info', '자동 수집 비활성화 상태 — 종료');
       process.exit(0);
     }
-    // SAST = UTC+2, no DST
-    const nowSAST = new Date(Date.now() + 2 * 3600 * 1000);
-    const currentHour = nowSAST.getUTCHours();
-    const targetHour  = Number.isInteger(settings.scheduleHour) ? settings.scheduleHour : 9;
-    await writeLog('info', `Schedule check: 현재 SAST ${currentHour}시 / 설정 ${targetHour}시`);
-    if (currentHour !== targetHour) {
+
+    const timezone    = settings.scheduleTimezone || 'Africa/Johannesburg';
+    const timeStr     = settings.scheduleTime     || '09:00';
+    const scheduleDays = settings.scheduleDays    || 'weekdays'; // 'weekdays' | 'daily'
+
+    // Get current time parts in the configured timezone via Intl API
+    const now = new Date();
+    const fmt = new Intl.DateTimeFormat('en-US', {
+      timeZone: timezone,
+      hour: 'numeric', minute: 'numeric', weekday: 'short', hour12: false,
+    });
+    const parts      = fmt.formatToParts(now);
+    const currentH   = parseInt(parts.find(p => p.type === 'hour').value);
+    const currentM   = parseInt(parts.find(p => p.type === 'minute').value);
+    const weekday    = parts.find(p => p.type === 'weekday').value; // 'Mon'…'Sun'
+    const isWeekend  = (weekday === 'Sat' || weekday === 'Sun');
+
+    // Day rule check
+    if (scheduleDays === 'weekdays' && isWeekend) {
+      await writeLog('info', `Schedule check: ${weekday} (주말) — 평일 전용 설정, 종료`);
+      process.exit(0);
+    }
+
+    // 30-minute slot check: target time must fall within the current cron slot
+    const [targetH, targetM] = timeStr.split(':').map(Number);
+    const targetTotal  = targetH * 60 + targetM;
+    const currentTotal = currentH * 60 + currentM;
+    const slotStart    = Math.floor(currentTotal / 30) * 30;
+    const slotEnd      = slotStart + 30;
+
+    await writeLog('info',
+      `Schedule check: ${timezone} 현재 ${String(currentH).padStart(2,'0')}:${String(currentM).padStart(2,'0')}` +
+      ` / 설정 ${timeStr} (슬롯 ${slotStart}-${slotEnd}분)`
+    );
+
+    if (targetTotal < slotStart || targetTotal >= slotEnd) {
       process.exit(0);
     }
   }

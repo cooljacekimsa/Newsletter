@@ -189,28 +189,31 @@
           </label>
         </label>
 
-        <label class="field-label mt">자동 수집 시간
-          <span class="hint">남아공 시간 (SAST, 평일만)</span>
+        <label class="field-label mt">수집 시간
+          <span class="hint">24시간 형식</span>
         </label>
         <div style="display:flex;align-items:center;gap:8px;">
-          <select id="schedule-hour" class="input" style="width:110px;height:38px;padding:6px 10px;">
-            <option value="6">06:00</option>
-            <option value="7">07:00</option>
-            <option value="8">08:00</option>
-            <option value="9" selected>09:00</option>
-            <option value="10">10:00</option>
-            <option value="11">11:00</option>
-            <option value="12">12:00</option>
-            <option value="13">13:00</option>
-            <option value="14">14:00</option>
-            <option value="15">15:00</option>
-            <option value="16">16:00</option>
-            <option value="17">17:00</option>
-            <option value="18">18:00</option>
-            <option value="19">19:00</option>
-            <option value="20">20:00</option>
-          </select>
+          <input type="time" id="schedule-time" class="input" value="09:00"
+                 style="width:130px;height:38px;padding:6px 10px;" />
           <span style="font-size:12px;color:var(--text-2);">= UTC <span id="schedule-utc-hint">07:00</span></span>
+        </div>
+
+        <label class="field-label mt">시간대</label>
+        <select id="schedule-timezone" class="input" style="height:38px;padding:6px 10px;">
+          <option value="Africa/Johannesburg">남아공 (SAST, UTC+2)</option>
+          <option value="Asia/Seoul">한국 (KST, UTC+9)</option>
+          <option value="Asia/Tokyo">일본 (JST, UTC+9)</option>
+          <option value="Europe/London">영국 (GMT/BST)</option>
+          <option value="Europe/Paris">유럽 중부 (CET, UTC+1)</option>
+          <option value="UTC">UTC</option>
+          <option value="America/New_York">미국 동부 (ET)</option>
+          <option value="America/Los_Angeles">미국 서부 (PT)</option>
+        </select>
+
+        <label class="field-label mt">실행 요일</label>
+        <div class="radio-row">
+          <label><input type="radio" name="schedule-days" value="weekdays" checked /> 평일만 (월–금)</label>
+          <label><input type="radio" name="schedule-days" value="daily" /> 매일 (월–일)</label>
         </div>
       </div>
 
@@ -235,11 +238,11 @@
   </main>
 
   <!-- Scripts (v=3 cache bust) -->
-  <script src="/js/firebase-init.js?v=5"></script>
-  <script src="/js/views/settings.js?v=5"></script>
-  <script src="/js/views/crawl.js?v=5"></script>
-  <script src="/js/views/newsletter.js?v=5"></script>
-  <script src="/js/views/logs.js?v=5"></script>
-  <script src="/js/app.js?v=5"></script>
+  <script src="/js/firebase-init.js?v=6"></script>
+  <script src="/js/views/settings.js?v=6"></script>
+  <script src="/js/views/crawl.js?v=6"></script>
+  <script src="/js/views/newsletter.js?v=6"></script>
+  <script src="/js/views/logs.js?v=6"></script>
+  <script src="/js/app.js?v=6"></script>
 </body>
 </html>

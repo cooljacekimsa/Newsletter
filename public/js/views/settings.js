@@ -9,7 +9,8 @@
   const hoursBackEl   = document.getElementById('hours-back');
   const thresholdEl   = document.getElementById('similarity-threshold');
   const scheduleEl      = document.getElementById('schedule-enabled');
-  const scheduleHourEl  = document.getElementById('schedule-hour');
+  const scheduleTimeEl  = document.getElementById('schedule-time');
+  const scheduleTzEl    = document.getElementById('schedule-timezone');
   const scheduleUtcHint = document.getElementById('schedule-utc-hint');
   const btnSave         = document.getElementById('btn-save-settings');
   const msgEl         = document.getElementById('settings-msg');
@@ -67,10 +68,12 @@
     ].join('\n');
     seedUrlsEl.value   = RECOMMENDED_SEED_URLS.join('\n');
     noiseEl.value      = DEFAULT_NOISE.join('\n');
-    hoursBackEl.value      = '24';
-    thresholdEl.value      = '0.75';
-    scheduleEl.checked     = true;
-    scheduleHourEl.value   = '9';
+    hoursBackEl.value    = '24';
+    thresholdEl.value    = '0.75';
+    scheduleEl.checked   = true;
+    scheduleTimeEl.value = '09:00';
+    scheduleTzEl.value   = 'Africa/Johannesburg';
+    setScheduleDays('weekdays');
     updateUtcHint();
   }
 
@@ -86,10 +89,12 @@
     noiseEl.value       = (s.noisePhrases && s.noisePhrases.length)
       ? s.noisePhrases.join('\n')
       : DEFAULT_NOISE.join('\n');
-    hoursBackEl.value      = s.hoursBack ?? 24;
-    thresholdEl.value      = s.similarityThreshold ?? 0.75;
-    scheduleEl.checked     = s.scheduleEnabled !== false;
-    scheduleHourEl.value   = s.scheduleHour ?? 9;
+    hoursBackEl.value    = s.hoursBack ?? 24;
+    thresholdEl.value    = s.similarityThreshold ?? 0.75;
+    scheduleEl.checked   = s.scheduleEnabled !== false;
+    scheduleTimeEl.value = s.scheduleTime || '09:00';
+    scheduleTzEl.value   = s.scheduleTimezone || 'Africa/Johannesburg';
+    setScheduleDays(s.scheduleDays || 'weekdays');
     updateUtcHint();
   }
 
@@ -106,18 +111,44 @@
       noisePhrases: noiseEl.value.split('\n').map(s => s.trim()).filter(Boolean),
       hoursBack:    parseInt(hoursBackEl.value)    || 24,
       similarityThreshold: parseFloat(thresholdEl.value) || 0.75,
-      scheduleEnabled: scheduleEl.checked,
-      scheduleHour:    parseInt(scheduleHourEl.value) || 9,
+      scheduleEnabled:  scheduleEl.checked,
+      scheduleTime:     scheduleTimeEl.value || '09:00',
+      scheduleTimezone: scheduleTzEl.value   || 'Africa/Johannesburg',
+      scheduleDays:     document.querySelector('input[name="schedule-days"]:checked')?.value || 'weekdays',
     };
   }
 
-  function updateUtcHint() {
-    const sast = parseInt(scheduleHourEl.value) || 9;
-    const utc  = (sast - 2 + 24) % 24;
-    scheduleUtcHint.textContent = String(utc).padStart(2, '0') + ':00';
+  function setScheduleDays(val) {
+    const el = document.querySelector(`input[name="schedule-days"][value="${val}"]`);
+    if (el) el.checked = true;
   }
 
-  scheduleHourEl.addEventListener('change', updateUtcHint);
+  // Compute UTC equivalent by comparing timezone-formatted time vs UTC
+  function getUtcOffsetMinutes(timezone) {
+    const d = new Date();
+    const local = new Date(d.toLocaleString('en-US', { timeZone: timezone }));
+    const utc   = new Date(d.toLocaleString('en-US', { timeZone: 'UTC' }));
+    return Math.round((local - utc) / 60000);
+  }
+
+  function updateUtcHint() {
+    const timeVal = scheduleTimeEl.value || '09:00';
+    const tz      = scheduleTzEl.value   || 'Africa/Johannesburg';
+    const [h, m]  = timeVal.split(':').map(Number);
+    try {
+      const offsetMin  = getUtcOffsetMinutes(tz);
+      const totalMin   = ((h * 60 + m - offsetMin) % 1440 + 1440) % 1440;
+      const utcH = Math.floor(totalMin / 60);
+      const utcM = totalMin % 60;
+      scheduleUtcHint.textContent =
+        String(utcH).padStart(2, '0') + ':' + String(utcM).padStart(2, '0');
+    } catch {
+      scheduleUtcHint.textContent = '--:--';
+    }
+  }
+
+  scheduleTimeEl.addEventListener('change', updateUtcHint);
+  scheduleTzEl.addEventListener('change', updateUtcHint);
 
   // ── Keyword Groups ──────────────────────────────────────
 

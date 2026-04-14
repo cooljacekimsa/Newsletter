@@ -1,12 +1,11 @@
 name: Crawl News
 
 on:
-  # Run every hour Mon-Fri 06:00–20:00 UTC (= 08:00–22:00 SAST)
-  # The actual fire time is controlled by 'scheduleHour' stored in Firestore.
-  # crawl.js compares current SAST hour against scheduleHour and exits early
-  # when it is not the right time, so only one run per day does real work.
+  # Runs every 30 min, 06:00–21:00 UTC (= 08:00–23:00 SAST).
+  # The actual fire time/timezone/days are controlled via Firestore (settings/global).
+  # crawl.js exits early unless the current local time falls in the target 30-min slot.
   schedule:
-    - cron: '0 6-20 * * 1-5'
+    - cron: '*/30 6-21 * * *'
 
   # Manual trigger from GitHub Actions UI
   workflow_dispatch:
@@ -29,6 +28,14 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+
+      - name: Cache npm dependencies
+        uses: actions/cache@v4
+        with:
+          path: scripts/node_modules
+          key: ${{ runner.os }}-npm-${{ hashFiles('scripts/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-
 
       - name: Install dependencies
         run: npm install --prefer-offline

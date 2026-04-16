@@ -15,7 +15,6 @@
   const crawlMsgEl  = document.getElementById('crawl-trigger-msg');
 
   const ARTICLE_SEP = '\n\n' + '─'.repeat(40) + '\n\n';
-  const CHAR_LIMIT  = 2990; // 3000에서 "[N/M부]\n\n" 레이블 여유분 제외
 
   let newsletters = [];
 
@@ -143,43 +142,23 @@
     }
   }
 
-  function splitContent(content) {
-    if (content.length <= 3000) return [content];
-    const articles = content.split(ARTICLE_SEP);
-    const parts = [];
-    let current = [];
-    let currentLen = 0;
-    for (const article of articles) {
-      const addLen = (current.length > 0 ? ARTICLE_SEP.length : 0) + article.length;
-      if (currentLen + addLen > CHAR_LIMIT && current.length > 0) {
-        parts.push(current.join(ARTICLE_SEP));
-        current = [article];
-        currentLen = article.length;
-      } else {
-        current.push(article);
-        currentLen += addLen;
-      }
-    }
-    if (current.length > 0) parts.push(current.join(ARTICLE_SEP));
-    return parts;
-  }
-
-  function renderSplitBar(barEl, parts) {
-    const total = parts.length;
-    barEl.innerHTML = `<span class="split-bar-label">${total}부로 나눠 복사:</span>`;
-    parts.forEach((part, i) => {
+  function renderArticleBar(barEl, articles) {
+    const total = articles.length;
+    barEl.innerHTML = `<span class="split-bar-label">기사별 복사 (${total}건):</span>`;
+    articles.forEach((article, i) => {
       const btn = document.createElement('button');
       btn.className = 'btn btn-sm btn-split-part';
-      btn.textContent = `${i + 1}부`;
-      btn.title = `${part.length}자`;
+      const firstLine = article.split('\n').find(l => l.trim()) || '';
+      const label = firstLine.slice(0, 14) || String(i + 1);
+      btn.textContent = label;
+      btn.title = `기사 ${i + 1}/${total} · ${article.length}자`;
       btn.addEventListener('click', async () => {
-        const labeled = `[${i + 1}/${total}부]\n\n${part}`;
         try {
-          await navigator.clipboard.writeText(labeled);
-          btn.textContent = `${i + 1}부 ✓`;
-          setTimeout(() => { btn.textContent = `${i + 1}부`; }, 2000);
+          await navigator.clipboard.writeText(article);
+          btn.textContent = label + ' ✓';
+          setTimeout(() => { btn.textContent = label; }, 2000);
         } catch {
-          fallbackCopy(labeled);
+          fallbackCopy(article);
         }
       });
       barEl.appendChild(btn);
@@ -192,9 +171,9 @@
     contentEl.textContent  = content;
 
     const splitBarEl = document.getElementById('nl-split-bar');
-    const parts = splitContent(content);
-    if (parts.length > 1) {
-      renderSplitBar(splitBarEl, parts);
+    const articles = content.split(ARTICLE_SEP).filter(a => a.trim());
+    if (articles.length > 1) {
+      renderArticleBar(splitBarEl, articles);
       splitBarEl.classList.remove('hidden');
     } else {
       splitBarEl.innerHTML = '';

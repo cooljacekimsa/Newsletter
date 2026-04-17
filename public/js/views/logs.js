@@ -7,8 +7,11 @@
   const btnDelAll  = document.getElementById('btn-delete-all-logs');
 
   let rawLogs = [];
+  let loaded = false;
 
   async function load() {
+    if (loaded) return;
+    loaded = true;
     listEl.innerHTML = '<p class="placeholder">불러오는 중...</p>';
     try {
       const snap = await window.db
@@ -29,8 +32,14 @@
       });
       render();
     } catch (e) {
+      loaded = false;
       listEl.innerHTML = `<p class="placeholder result-error">오류: ${e.message}</p>`;
     }
+  }
+
+  function reload() {
+    loaded = false;
+    load();
   }
 
   function render() {
@@ -96,7 +105,7 @@
     }
   }
 
-  btnRefresh.addEventListener('click', load);
+  btnRefresh.addEventListener('click', reload);
   btnDelAll.addEventListener('click', deleteAllLogs);
 
   btnCopy.addEventListener('click', async () => {

@@ -17,8 +17,11 @@
   const ARTICLE_SEP = '\n\n' + '─'.repeat(40) + '\n\n';
 
   let newsletters = [];
+  let loaded = false;
 
   async function load() {
+    if (loaded) return;
+    loaded = true;
     listEl.innerHTML = '<p class="placeholder">불러오는 중...</p>';
     try {
       const snap = await window.db
@@ -41,8 +44,14 @@
       render();
       updateStatsBar();
     } catch (e) {
+      loaded = false;
       listEl.innerHTML = `<p class="placeholder result-error">오류: ${e.message}</p>`;
     }
+  }
+
+  function reload() {
+    loaded = false;
+    load();
   }
 
   function formatDate(isoStr) {
@@ -191,7 +200,7 @@
 
   btnClose.addEventListener('click', closeModal);
   modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
-  btnRefresh.addEventListener('click', load);
+  btnRefresh.addEventListener('click', reload);
   btnDelAll.addEventListener('click', deleteAllNewsletters);
 
   btnCopy.addEventListener('click', async () => {

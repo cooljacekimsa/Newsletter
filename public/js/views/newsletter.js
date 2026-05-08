@@ -10,9 +10,11 @@
   const btnClose    = document.getElementById('btn-close-modal');
   const btnCopy     = document.getElementById('btn-copy-nl');
   const btnShare    = document.getElementById('btn-share-nl');
-  const statsTextEl = document.getElementById('nl-stats-text');
-  const btnRunCrawl = document.getElementById('btn-run-crawl');
-  const crawlMsgEl  = document.getElementById('crawl-trigger-msg');
+  const statsTextEl  = document.getElementById('nl-stats-text');
+  const btnRunCrawl  = document.getElementById('btn-run-crawl');
+  const progressEl   = document.getElementById('crawl-progress');
+  const progressFill = document.getElementById('crawl-progress-fill');
+  const progressMsg  = document.getElementById('crawl-progress-msg');
 
   const ARTICLE_SEP = '\n\n' + '─'.repeat(40) + '\n\n';
 
@@ -74,6 +76,20 @@
     statsTextEl.textContent = `마지막 수집: ${d} · ${nl.articleCount}건`;
   }
 
+  // ── 프로그레스바 헬퍼 ────────────────────────────────────
+  function setProgress(pct, state, msg) {
+    progressEl.classList.remove('hidden');
+    progressFill.style.width = pct + '%';
+    progressFill.className = 'crawl-progress-fill' + (state === 'running' ? ' running' : '');
+    if (state === 'ok')  progressFill.style.background = 'var(--success)';
+    if (state === 'err') progressFill.style.background = 'var(--danger)';
+    if (state === 'running') progressFill.style.background = '';
+    progressMsg.textContent = msg;
+    progressMsg.className = 'crawl-progress-msg' + (state === 'ok' ? ' ok' : state === 'err' ? ' err' : '');
+  }
+
+  function hideProgress() { progressEl.classList.add('hidden'); }
+
   // ── 수집 트리거 ──────────────────────────────────────────
   btnRunCrawl.addEventListener('click', async () => {
     btnRunCrawl.disabled = true;
@@ -83,14 +99,32 @@
       if (doc.exists) hoursBack = doc.data().hoursBack || 24;
     } catch { /* use default */ }
 
-    window.crawlView?.trigger(hoursBack, (msg, type) => {
-      crawlMsgEl.textContent = msg;
-      crawlMsgEl.className   = `crawl-msg ${type}`;
-      crawlMsgEl.classList.remove('hidden');
-      if (type !== 'info') {
-        setTimeout(() => crawlMsgEl.classList.add('hidden'), 6000);
+    setProgress(15, 'running', '수집 요청 중...');
+
+    window.crawlView?.trigger(hoursBack, async (msg, type) => {
+      if (type === 'error') {
+        setProgress(100, 'err', msg);
+        setTimeout(hideProgress, 6000);
         btnRunCrawl.disabled = false;
+        return;
       }
+      // type === 'success': 트리거 성공 → GitHub Actions 폴링 시작
+      setProgress(30, 'running', '대기 중...');
+      await window.crawlView.pollRunStatus((status, conclusion) => {
+        if (status === 'queued')      setProgress(30, 'running', '대기 중...');
+        if (status === 'in_progress') setProgress(65, 'running', '수집 중...');
+        if (status === 'timeout')     { setProgress(100, 'err', '시간 초과 — 로그 탭 확인'); setTimeout(hideProgress, 8000); btnRunCrawl.disabled = false; }
+        if (status === 'completed') {
+          if (conclusion === 'success') {
+            setProgress(100, 'ok', '✓ 수집 완료');
+            setTimeout(() => { hideProgress(); reload(); updateStatsBar(); }, 2000);
+          } else {
+            setProgress(100, 'err', `수집 실패 (${conclusion}) — 로그 탭 확인`);
+            setTimeout(hideProgress, 8000);
+          }
+          btnRunCrawl.disabled = false;
+        }
+      });
     });
   });
 

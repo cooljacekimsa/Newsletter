@@ -18,8 +18,6 @@
   const btnSaveGroup   = document.getElementById('btn-save-group');
   const btnDeleteGroup = document.getElementById('btn-delete-group');
 
-  // Recommended seed URLs button
-  const btnAddUrls = document.getElementById('btn-add-recommended-urls');
 
   // PAT
   const patInput   = document.getElementById('gh-pat-input');
@@ -180,19 +178,6 @@
   btnLoadGroup.addEventListener('click', loadGroup);
   btnSaveGroup.addEventListener('click', saveGroup);
   btnDeleteGroup.addEventListener('click', deleteGroup);
-
-  // ── Recommended Seed URLs ───────────────────────────────
-
-  btnAddUrls.addEventListener('click', () => {
-    const current = seedUrlsEl.value.split('\n').map(s => s.trim()).filter(Boolean);
-    const toAdd = RECOMMENDED_SEED_URLS.filter(u => !current.includes(u));
-    if (!toAdd.length) {
-      showMsg('추천 URL이 이미 모두 포함되어 있습니다.', 'success');
-      return;
-    }
-    seedUrlsEl.value = [...current, ...toAdd].join('\n');
-    showMsg(`추천 URL ${toAdd.length}개 추가됨. "저장" 버튼을 눌러 적용하세요.`, 'success');
-  });
 
   // ── Save Settings ───────────────────────────────────────
 

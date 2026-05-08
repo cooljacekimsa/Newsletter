@@ -44,5 +44,38 @@
     }
   }
 
-  window.crawlView = { getPat, trigger };
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+  async function pollRunStatus(onUpdate) {
+    const pat = getPat();
+    if (!pat) return;
+
+    const url = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/actions/workflows/${GH_WORKFLOW}/runs?branch=${encodeURIComponent(GH_BRANCH)}&per_page=1`;
+    const headers = {
+      'Authorization': `Bearer ${pat}`,
+      'Accept': 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28',
+    };
+
+    // GitHub needs a moment to register the new run
+    await sleep(4000);
+
+    for (let i = 0; i < 42; i++) {  // max ~3.5 min
+      try {
+        const resp = await fetch(url, { headers });
+        if (resp.ok) {
+          const data = await resp.json();
+          const run  = data.workflow_runs?.[0];
+          if (run) {
+            onUpdate(run.status, run.conclusion);
+            if (run.status === 'completed') return;
+          }
+        }
+      } catch { /* retry */ }
+      await sleep(5000);
+    }
+    onUpdate('timeout', null);
+  }
+
+  window.crawlView = { getPat, trigger, pollRunStatus };
 })();

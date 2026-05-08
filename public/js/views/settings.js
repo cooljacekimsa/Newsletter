@@ -5,6 +5,7 @@
   const kwExclude    = document.getElementById('kw-exclude');
   const publishersEl = document.getElementById('publishers');
   const seedUrlsEl   = document.getElementById('seed-urls');
+  const rssUrlsEl    = document.getElementById('rss-urls');
   const noiseEl      = document.getElementById('noise-phrases');
   const hoursBackEl  = document.getElementById('hours-back');
   const thresholdEl  = document.getElementById('similarity-threshold');
@@ -71,6 +72,7 @@
       '한겨레', '한국일보', '조선일보', '동아일보', '경향신문',
     ].join('\n');
     seedUrlsEl.value  = RECOMMENDED_SEED_URLS.join('\n');
+    rssUrlsEl.value   = '';
     noiseEl.value     = DEFAULT_NOISE.join('\n');
     hoursBackEl.value = '24';
     thresholdEl.value = '0.75';
@@ -85,6 +87,7 @@
 
     publishersEl.value = (s.publishers  || []).join('\n');
     seedUrlsEl.value   = (s.seedUrls    || []).join('\n');
+    rssUrlsEl.value    = (s.rssUrls     || []).join('\n');
     noiseEl.value      = (s.noisePhrases && s.noisePhrases.length)
       ? s.noisePhrases.join('\n')
       : DEFAULT_NOISE.join('\n');
@@ -102,6 +105,7 @@
       },
       publishers:   publishersEl.value.split('\n').map(s => s.trim()).filter(Boolean),
       seedUrls:     seedUrlsEl.value.split('\n').map(s => s.trim()).filter(Boolean),
+      rssUrls:      rssUrlsEl.value.split('\n').map(s => s.trim()).filter(Boolean),
       noisePhrases: noiseEl.value.split('\n').map(s => s.trim()).filter(Boolean),
       hoursBack:    parseInt(hoursBackEl.value) || 24,
       similarityThreshold: parseFloat(thresholdEl.value) || 0.75,

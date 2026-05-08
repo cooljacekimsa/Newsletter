@@ -3,6 +3,8 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
 
+const RSS_TIMEOUT_MS = 15000;
+
 const DEFAULT_SEED_URLS = [
   'https://www.yna.co.kr/ubuntu/index',        // 연합뉴스 아프리카
   'https://www.yna.co.kr/international/index', // 연합뉴스 국제
@@ -43,13 +45,14 @@ function getDomain(url) {
   try { return new URL(url).hostname; } catch { return url; }
 }
 
-async function fetchUrl(url) {
+async function fetchUrl(url, { timeout = 12000, responseType = 'text' } = {}) {
   await waitForRateLimit(getDomain(url));
   const res = await axios.get(url, {
-    timeout: 12000,
+    timeout,
+    responseType,
     headers: {
       'User-Agent': 'Mozilla/5.0 (compatible; AfricaNewsBot/1.0)',
-      'Accept': 'text/html,application/xhtml+xml',
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
       'Accept-Language': 'ko-KR,ko;q=0.9,en;q=0.8',
     },
   });
@@ -257,6 +260,71 @@ async function crawlSeedUrl(seedUrl, startTime, endTime, logFn, noisePhrases) {
   return articles;
 }
 
+async function crawlRssUrl(rssUrl, startTime, endTime, logFn, noisePhrases) {
+  const articles = [];
+  logFn('info', `Fetching RSS: ${rssUrl}`, rssUrl);
+
+  let xmlText;
+  try {
+    xmlText = await fetchUrl(rssUrl, { timeout: RSS_TIMEOUT_MS });
+  } catch (err) {
+    logFn('error', `Cannot fetch RSS ${rssUrl}: ${err.message}`, rssUrl);
+    return articles;
+  }
+
+  const $ = cheerio.load(xmlText, { xmlMode: true });
+  const items = $('item');
+  logFn('info', `RSS ${rssUrl}: found ${items.length} items`);
+
+  const candidates = [];
+  items.each((_, el) => {
+    // RSS 2.0: <link> text node; Atom: <link href="..."/>; fallback: <guid>
+    const linkEl = $(el).find('link');
+    const url =
+      linkEl.text().trim() ||
+      linkEl.attr('href') ||
+      $(el).find('guid').text().trim();
+    if (!url || !url.startsWith('http')) return;
+
+    const pubDateStr = $(el).find('pubDate').text().trim() ||
+                       $(el).find('published').text().trim() ||
+                       $(el).find('dc\\:date').text().trim();
+    let pubDate = pubDateStr ? new Date(pubDateStr) : null;
+    if (pubDate && isNaN(pubDate.getTime())) pubDate = null;
+
+    if (pubDate && (pubDate < startTime || pubDate > endTime)) return;
+
+    candidates.push({ url: url.split('?')[0], pubDate });
+  });
+
+  logFn('info', `RSS ${rssUrl}: ${candidates.length} candidates in time range`);
+
+  for (let i = 0; i < candidates.length; i += MAX_CONCURRENT) {
+    const batch = candidates.slice(i, i + MAX_CONCURRENT);
+    const results = await Promise.allSettled(
+      batch.map(async ({ url, pubDate }) => {
+        try {
+          const html = await fetchUrl(url);
+          const art = parseArticle(html, url, noisePhrases);
+          if (!art.publishedAt && pubDate) art.publishedAt = pubDate;
+          if (!art.publishedAt) return null;
+          if (art.publishedAt < startTime || art.publishedAt > endTime) return null;
+          if (!art.title || art.title.length < 5) return null;
+          return art;
+        } catch (err) {
+          logFn('error', `RSS article fetch failed: ${err.message}`, url);
+          return null;
+        }
+      })
+    );
+    for (const r of results) {
+      if (r.status === 'fulfilled' && r.value) articles.push(r.value);
+    }
+  }
+
+  return articles;
+}
+
 function applyKeywordFilter(articles, keywords) {
   const { include = [], exclude = [], mode = 'AND' } = keywords;
   return articles.filter(art => {
@@ -271,7 +339,7 @@ function applyKeywordFilter(articles, keywords) {
   });
 }
 
-async function crawl({ seedUrls, hoursBack = 24, keywords, noisePhrases, logFn }) {
+async function crawl({ seedUrls, rssUrls, hoursBack = 24, keywords, noisePhrases, logFn }) {
   const endTime = new Date();
   const startTime = new Date(endTime.getTime() - hoursBack * 3600 * 1000);
 
@@ -280,6 +348,11 @@ async function crawl({ seedUrls, hoursBack = 24, keywords, noisePhrases, logFn }
   let all = [];
   for (const url of urls) {
     const arts = await crawlSeedUrl(url, startTime, endTime, logFn, noisePhrases);
+    all = all.concat(arts);
+  }
+
+  for (const url of (rssUrls || [])) {
+    const arts = await crawlRssUrl(url, startTime, endTime, logFn, noisePhrases);
     all = all.concat(arts);
   }
 

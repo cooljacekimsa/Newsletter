@@ -54,11 +54,12 @@ async function main() {
   const cliHours = process.argv[2] ? parseInt(process.argv[2]) : null;
   if (cliHours && !isNaN(cliHours)) settings.hoursBack = cliHours;
 
-  await writeLog('info', `Crawl started — hoursBack=${settings.hoursBack}, seedUrls=${JSON.stringify(settings.seedUrls)}`);
+  await writeLog('info', `Crawl started — hoursBack=${settings.hoursBack}, seedUrls=${settings.seedUrls?.length ?? 0}, rssUrls=${settings.rssUrls?.length ?? 0}`);
 
   // 1. Crawl
   const articles = await crawl({
     seedUrls: settings.seedUrls,
+    rssUrls: settings.rssUrls || [],
     hoursBack: settings.hoursBack,
     keywords: settings.keywords,
     noisePhrases: settings.noisePhrases,

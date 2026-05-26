@@ -36,7 +36,7 @@
   ];
 
   const RECOMMENDED_SEED_URLS = [
-    'https://www.yna.co.kr/ubuntu/index',
+    'https://www.yna.co.kr/africa/index',
     'https://www.yna.co.kr/international/index',
     'https://www.hani.co.kr/arti/international/',
     'https://www.khan.co.kr/world/',

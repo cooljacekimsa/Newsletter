@@ -6,7 +6,7 @@ const cheerio = require('cheerio');
 const RSS_TIMEOUT_MS = 15000;
 
 const DEFAULT_SEED_URLS = [
-  'https://www.yna.co.kr/ubuntu/index',        // 연합뉴스 아프리카
+  'https://www.yna.co.kr/africa/index',         // 연합뉴스 아프리카
   'https://www.yna.co.kr/international/index', // 연합뉴스 국제
   'https://www.hani.co.kr/arti/international/', // 한겨레 국제
   'https://www.khan.co.kr/world/',             // 경향신문 세계

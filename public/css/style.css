@@ -157,6 +157,7 @@ body {
   border-radius: var(--radius); box-shadow: var(--shadow);
 }
 .nl-stats-text { font-size: 12px; color: var(--text-2); }
+#btn-run-crawl { padding: 9px 24px; }
 .result-error { color: var(--danger); }
 
 /* ── Crawl Progress Bar ───────────────────────────────── */

@@ -2,11 +2,12 @@
 
 const axios = require('axios');
 const cheerio = require('cheerio');
+const https = require('https');
 
 const RSS_TIMEOUT_MS = 15000;
 
 const DEFAULT_SEED_URLS = [
-  'https://www.yna.co.kr/africa/index',         // 연합뉴스 아프리카
+  'https://www.yna.co.kr/ubuntu/index',        // 연합뉴스 아프리카
   'https://www.yna.co.kr/international/index', // 연합뉴스 국제
   'https://www.hani.co.kr/arti/international/', // 한겨레 국제
   'https://www.khan.co.kr/world/',             // 경향신문 세계
@@ -45,18 +46,43 @@ function getDomain(url) {
   try { return new URL(url).hostname; } catch { return url; }
 }
 
-async function fetchUrl(url, { timeout = 12000, responseType = 'text' } = {}) {
+const BROWSER_HEADERS = {
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+  'Accept-Language': 'ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7',
+  'Accept-Encoding': 'gzip, deflate, br',
+  'Connection': 'keep-alive',
+  'Upgrade-Insecure-Requests': '1',
+  'Sec-Fetch-Dest': 'document',
+  'Sec-Fetch-Mode': 'navigate',
+  'Sec-Fetch-Site': 'none',
+  'Sec-Fetch-User': '?1',
+  'Cache-Control': 'max-age=0',
+};
+
+const httpsAgent = new https.Agent({ keepAlive: true });
+
+async function fetchUrl(url, { timeout = 12000, responseType = 'text', retries = 2 } = {}) {
   await waitForRateLimit(getDomain(url));
-  const res = await axios.get(url, {
-    timeout,
-    responseType,
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (compatible; AfricaNewsBot/1.0)',
-      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-      'Accept-Language': 'ko-KR,ko;q=0.9,en;q=0.8',
-    },
-  });
-  return res.data;
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const res = await axios.get(url, {
+        timeout,
+        responseType,
+        httpsAgent,
+        headers: BROWSER_HEADERS,
+        maxRedirects: 5,
+      });
+      return res.data;
+    } catch (err) {
+      const isRetryable = err.code === 'ECONNRESET' || err.code === 'ECONNABORTED' || err.code === 'ETIMEDOUT';
+      if (isRetryable && attempt < retries) {
+        await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+        continue;
+      }
+      throw err;
+    }
+  }
 }
 
 function parsePublishedTime(html) {

@@ -13,7 +13,7 @@ const DEFAULT_PUBLISHERS = [
 const DEFAULT_SETTINGS = {
   keywords: { include: [], exclude: [], mode: 'AND' },
   publishers: DEFAULT_PUBLISHERS,
-  seedUrls: ['https://www.yna.co.kr/africa/index'],
+  seedUrls: ['https://www.yna.co.kr/ubuntu/index'],
   hoursBack: 24,
   similarityThreshold: 0.75,
 };

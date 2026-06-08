@@ -62,7 +62,7 @@ const BROWSER_HEADERS = {
 
 const httpsAgent = new https.Agent({ keepAlive: true });
 
-async function fetchUrl(url, { timeout = 12000, responseType = 'text', retries = 2 } = {}) {
+async function fetchUrl(url, { timeout = 12000, responseType = 'text', retries = 2, headers = {} } = {}) {
   await waitForRateLimit(getDomain(url));
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
@@ -70,7 +70,7 @@ async function fetchUrl(url, { timeout = 12000, responseType = 'text', retries =
         timeout,
         responseType,
         httpsAgent,
-        headers: BROWSER_HEADERS,
+        headers: { ...BROWSER_HEADERS, ...headers },
         maxRedirects: 5,
       });
       return res.data;

@@ -8,6 +8,10 @@ on:
         description: '크롤링할 리뷰 목록 페이지 URL'
         required: false
         default: ''
+      since_date:
+        description: '이 날짜(YYYY-MM-DD) 이후 ~ 현재까지만 수집 (비우면 전체 수집)'
+        required: false
+        default: ''
 
 jobs:
   crawl:
@@ -36,7 +40,7 @@ jobs:
         working-directory: scripts
 
       - name: Run review crawler
-        run: node reviewCrawl.js "${{ github.event.inputs.target_url }}"
+        run: node reviewCrawl.js "${{ github.event.inputs.target_url }}" "${{ github.event.inputs.since_date }}"
         working-directory: scripts
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}

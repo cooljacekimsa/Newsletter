@@ -5,7 +5,8 @@ const cheerio = require('cheerio');
 const { fetchUrl } = require('./crawler');
 
 const DEFAULT_TARGET_URL = 'https://www.hellopeter.com/samsung-south-africa';
-const DEFAULT_MAX_PAGES = 3;
+// 무한 루프 방지용 안전 상한 — "전체 수집"/"기간 지정 수집" 모두에 적용
+const MAX_PAGES_SAFETY = 200;
 
 let db;
 
@@ -192,6 +193,12 @@ function diagnosePage($, html, pageUrl, logFn) {
   logFn('info', `Diagnose body text sample: ${bodyText || '(empty)'}`, pageUrl);
 }
 
+// 리뷰 목록은 최신순 정렬이 보장되므로, sinceDate보다 오래된 리뷰를
+// 만나면 그 이후 페이지는 모두 더 오래된 리뷰만 있다고 보고 중단한다.
+function isOlderThanCutoff(review, sinceDate) {
+  return !!(sinceDate && review.postedAt && review.postedAt < sinceDate);
+}
+
 function buildPageUrl(baseUrl, page) {
   const u = new URL(baseUrl);
   u.searchParams.set('page', String(page));
@@ -224,14 +231,14 @@ async function fetchReviewApiPage(apiUrl, referer) {
 
 // Vue 앱이 사용하는 hellopeter REST API에서 직접 JSON을 가져와 파싱
 // (정적 HTML에는 리뷰 데이터가 없는 SPA이므로 우선 시도)
-async function crawlReviewsViaApi(targetUrl, maxPages, logFn) {
+async function crawlReviewsViaApi(targetUrl, sinceDate, logFn) {
   const companySlug = getCompanySlug(targetUrl);
   if (!companySlug) return null;
 
   const all = [];
   const seenIds = new Set();
 
-  for (let page = 1; page <= maxPages; page++) {
+  for (let page = 1; page <= MAX_PAGES_SAFETY; page++) {
     const apiUrl = buildApiUrl(companySlug, page);
     logFn('info', `Fetching review API page ${page}: ${apiUrl}`, apiUrl);
 
@@ -259,24 +266,31 @@ async function crawlReviewsViaApi(targetUrl, maxPages, logFn) {
     }
 
     let addedAny = false;
+    let reachedCutoff = false;
     for (const r of pageReviews) {
+      if (isOlderThanCutoff(r, sinceDate)) { reachedCutoff = true; continue; }
       if (seenIds.has(r.reviewId)) continue;
       seenIds.add(r.reviewId);
       all.push(r);
       addedAny = true;
     }
-    logFn('info', `API page ${page}: ${pageReviews.length} reviews parsed (total ${all.length})`, apiUrl);
+    logFn('info', `API page ${page}: ${pageReviews.length} reviews parsed (kept ${all.length} so far)`, apiUrl);
+
+    if (reachedCutoff) {
+      logFn('info', `Reached reviews older than cutoff date — stopping pagination`, apiUrl);
+      break;
+    }
     if (!addedAny) break;
   }
 
   return all;
 }
 
-async function crawlReviewsViaHtml(targetUrl, maxPages, logFn) {
+async function crawlReviewsViaHtml(targetUrl, sinceDate, logFn) {
   const all = [];
   const seenIds = new Set();
 
-  for (let page = 1; page <= maxPages; page++) {
+  for (let page = 1; page <= MAX_PAGES_SAFETY; page++) {
     const pageUrl = page === 1 ? targetUrl : buildPageUrl(targetUrl, page);
     logFn('info', `Fetching review page ${page}: ${pageUrl}`, pageUrl);
 
@@ -299,24 +313,31 @@ async function crawlReviewsViaHtml(targetUrl, maxPages, logFn) {
     }
 
     let addedAny = false;
+    let reachedCutoff = false;
     for (const r of pageReviews) {
+      if (isOlderThanCutoff(r, sinceDate)) { reachedCutoff = true; continue; }
       if (seenIds.has(r.reviewId)) continue;
       seenIds.add(r.reviewId);
       all.push(r);
       addedAny = true;
     }
-    logFn('info', `Page ${page}: ${pageReviews.length} reviews parsed (total ${all.length})`, pageUrl);
+    logFn('info', `Page ${page}: ${pageReviews.length} reviews parsed (kept ${all.length} so far)`, pageUrl);
+
+    if (reachedCutoff) {
+      logFn('info', `Reached reviews older than cutoff date — stopping pagination`, pageUrl);
+      break;
+    }
     if (!addedAny) break;
   }
 
   return all;
 }
 
-async function crawlReviews(targetUrl, maxPages, logFn) {
-  const apiResult = await crawlReviewsViaApi(targetUrl, maxPages, logFn);
+async function crawlReviews(targetUrl, sinceDate, logFn) {
+  const apiResult = await crawlReviewsViaApi(targetUrl, sinceDate, logFn);
   if (apiResult && apiResult.length) return apiResult;
 
-  return crawlReviewsViaHtml(targetUrl, maxPages, logFn);
+  return crawlReviewsViaHtml(targetUrl, sinceDate, logFn);
 }
 
 async function main() {
@@ -334,11 +355,18 @@ async function main() {
 
   const cliUrl = (process.argv[2] || '').trim();
   const targetUrl = cliUrl || settings.targetUrl || DEFAULT_TARGET_URL;
-  const maxPages = settings.maxPages || DEFAULT_MAX_PAGES;
 
-  await writeLog('info', `Review crawl started — target=${targetUrl}, maxPages=${maxPages}`);
+  const sinceDateStr = (process.argv[3] || '').trim();
+  let sinceDate = null;
+  if (sinceDateStr) {
+    const d = new Date(sinceDateStr);
+    if (!isNaN(d.getTime())) sinceDate = d;
+  }
+  const scopeLabel = sinceDate ? `${sinceDateStr} 이후 ~ 현재` : '전체';
 
-  const reviews = await crawlReviews(targetUrl, maxPages, writeLog);
+  await writeLog('info', `Review crawl started — target=${targetUrl}, scope=${scopeLabel}`);
+
+  const reviews = await crawlReviews(targetUrl, sinceDate, writeLog);
   await writeLog('info', `Crawled ${reviews.length} reviews`);
 
   if (!reviews.length) {

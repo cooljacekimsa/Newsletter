@@ -206,6 +206,13 @@
                  value="https://www.hellopeter.com/samsung-south-africa"
                  placeholder="https://www.hellopeter.com/회사명" />
         </div>
+
+        <label class="field-label mt">수집 범위</label>
+        <div class="radio-row">
+          <label><input type="radio" name="rc-scope" value="all" checked /> 전체</label>
+          <label><input type="radio" name="rc-scope" value="period" /> 기간 지정 (이후 ~ 현재)</label>
+        </div>
+        <input type="date" id="rc-since-date" class="input mt hidden" />
       </div>
 
       <!-- Compact crawl bar -->

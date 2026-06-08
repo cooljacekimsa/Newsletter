@@ -198,7 +198,81 @@ function buildPageUrl(baseUrl, page) {
   return u.toString();
 }
 
-async function crawlReviews(targetUrl, maxPages, logFn) {
+// hellopeter는 Vue SPA — 정적 HTML에는 데이터가 없고, 프론트가 호출하는
+// REST API(api.hellopeter.com)에서 직접 JSON을 가져온다.
+const HELLOPETER_API_BASE = 'https://api.hellopeter.com/api/consumer/business';
+
+function getCompanySlug(targetUrl) {
+  try {
+    const parts = new URL(targetUrl).pathname.split('/').filter(Boolean);
+    return parts[0] || null;
+  } catch {
+    return null;
+  }
+}
+
+function buildApiUrl(companySlug, page) {
+  return `${HELLOPETER_API_BASE}/${companySlug}/reviews?page=${page}`;
+}
+
+async function fetchReviewApiPage(apiUrl, referer) {
+  const raw = await fetchUrl(apiUrl, {
+    headers: { 'Accept': 'application/json, text/plain, */*', 'Referer': referer },
+  });
+  return typeof raw === 'string' ? JSON.parse(raw) : raw;
+}
+
+// Vue 앱이 사용하는 hellopeter REST API에서 직접 JSON을 가져와 파싱
+// (정적 HTML에는 리뷰 데이터가 없는 SPA이므로 우선 시도)
+async function crawlReviewsViaApi(targetUrl, maxPages, logFn) {
+  const companySlug = getCompanySlug(targetUrl);
+  if (!companySlug) return null;
+
+  const all = [];
+  const seenIds = new Set();
+
+  for (let page = 1; page <= maxPages; page++) {
+    const apiUrl = buildApiUrl(companySlug, page);
+    logFn('info', `Fetching review API page ${page}: ${apiUrl}`, apiUrl);
+
+    let data;
+    try {
+      data = await fetchReviewApiPage(apiUrl, targetUrl);
+    } catch (err) {
+      logFn('info', `Review API unavailable (${err.message}) — falling back to HTML parsing`, apiUrl);
+      return all.length ? all : null;
+    }
+
+    const arrays = [];
+    findReviewArraysInJson(data, arrays);
+    if (!arrays.length) {
+      const topKeys = data && typeof data === 'object' ? Object.keys(data).slice(0, 20) : [];
+      logFn('info', `Review API: no review array recognized — top-level keys=[${topKeys.join(', ')}], sample=${JSON.stringify(data).slice(0, 400)}`, apiUrl);
+      return all.length ? all : null;
+    }
+    arrays.sort((a, b) => b.length - a.length);
+    const pageReviews = arrays[0].map(raw => normalizeReviewFromJson(raw, targetUrl)).filter(Boolean);
+
+    if (!pageReviews.length) {
+      logFn('info', `Review API: array found but normalization failed — sample item keys=[${Object.keys(arrays[0][0] || {}).join(', ')}]`, apiUrl);
+      return all.length ? all : null;
+    }
+
+    let addedAny = false;
+    for (const r of pageReviews) {
+      if (seenIds.has(r.reviewId)) continue;
+      seenIds.add(r.reviewId);
+      all.push(r);
+      addedAny = true;
+    }
+    logFn('info', `API page ${page}: ${pageReviews.length} reviews parsed (total ${all.length})`, apiUrl);
+    if (!addedAny) break;
+  }
+
+  return all;
+}
+
+async function crawlReviewsViaHtml(targetUrl, maxPages, logFn) {
   const all = [];
   const seenIds = new Set();
 
@@ -236,6 +310,13 @@ async function crawlReviews(targetUrl, maxPages, logFn) {
   }
 
   return all;
+}
+
+async function crawlReviews(targetUrl, maxPages, logFn) {
+  const apiResult = await crawlReviewsViaApi(targetUrl, maxPages, logFn);
+  if (apiResult && apiResult.length) return apiResult;
+
+  return crawlReviewsViaHtml(targetUrl, maxPages, logFn);
 }
 
 async function main() {

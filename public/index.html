@@ -10,6 +10,9 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+
+  <!-- SheetJS — Excel(.xlsx) 생성 (웹크롤링 탭의 내보내기 기능) -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.20.2/dist/xlsx.full.min.js"></script>
 </head>
 <body>
 
@@ -23,6 +26,7 @@
   <nav class="tab-bar">
     <button class="tab active" data-tab="newsletter">뉴스레터</button>
     <button class="tab" data-tab="settings">설정</button>
+    <button class="tab" data-tab="reviewcrawl">웹크롤링</button>
     <button class="tab" data-tab="logs">로그</button>
   </nav>
 
@@ -192,6 +196,58 @@
       <div id="settings-msg" class="msg hidden"></div>
     </section>
 
+    <!-- Web Crawling (Review) Tab -->
+    <section id="tab-reviewcrawl" class="tab-section hidden">
+
+      <div class="card">
+        <label class="field-label">대상 URL</label>
+        <div style="display:flex;gap:8px;">
+          <input type="text" id="rc-url-input" class="input"
+                 value="https://www.hellopeter.com/samsung-south-africa"
+                 placeholder="https://www.hellopeter.com/회사명" />
+        </div>
+      </div>
+
+      <!-- Compact crawl bar -->
+      <div class="nl-crawl-bar mt">
+        <span id="rc-stats-text" class="nl-stats-text">불러오는 중...</span>
+        <button id="btn-run-review-crawl" class="btn btn-primary">수집</button>
+      </div>
+      <div id="rc-progress" class="crawl-progress hidden">
+        <div class="crawl-progress-track">
+          <div id="rc-progress-fill" class="crawl-progress-fill"></div>
+        </div>
+        <p id="rc-progress-msg" class="crawl-progress-msg"></p>
+      </div>
+
+      <div class="section-header">
+        <h2>웹크롤링 결과</h2>
+        <div style="display:flex;gap:6px;">
+          <button id="btn-delete-all-rc" class="btn btn-sm btn-danger">전체 삭제</button>
+          <button id="btn-refresh-rc" class="btn btn-sm">새로고침</button>
+        </div>
+      </div>
+
+      <!-- Run list -->
+      <div id="rc-list" class="nl-list">
+        <p class="placeholder">수집을 실행하면 결과가 여기에 표시됩니다.</p>
+      </div>
+
+      <!-- Run detail modal -->
+      <div id="rc-modal" class="modal hidden">
+        <div class="modal-inner">
+          <div class="modal-header">
+            <span id="rc-modal-title" class="modal-title"></span>
+            <div class="modal-actions">
+              <button id="btn-export-rc" class="btn btn-sm btn-secondary">Excel 다운로드</button>
+              <button id="btn-close-rc-modal" class="btn btn-sm btn-ghost">✕</button>
+            </div>
+          </div>
+          <div id="rc-review-list" class="rc-review-list"></div>
+        </div>
+      </div>
+    </section>
+
     <!-- Logs Tab -->
     <section id="tab-logs" class="tab-section hidden">
       <div class="section-header">
@@ -209,13 +265,14 @@
 
   </main>
 
-  <!-- Scripts (v=9) -->
-  <script src="/js/firebase-init.js?v=12"></script>
-  <script src="/js/views/auth.js?v=12"></script>
-  <script src="/js/views/settings.js?v=12"></script>
-  <script src="/js/views/crawl.js?v=12"></script>
-  <script src="/js/views/newsletter.js?v=12"></script>
-  <script src="/js/views/logs.js?v=12"></script>
-  <script src="/js/app.js?v=12"></script>
+  <!-- Scripts (v=13) -->
+  <script src="/js/firebase-init.js?v=13"></script>
+  <script src="/js/views/auth.js?v=13"></script>
+  <script src="/js/views/settings.js?v=13"></script>
+  <script src="/js/views/crawl.js?v=13"></script>
+  <script src="/js/views/newsletter.js?v=13"></script>
+  <script src="/js/views/reviewCrawl.js?v=13"></script>
+  <script src="/js/views/logs.js?v=13"></script>
+  <script src="/js/app.js?v=13"></script>
 </body>
 </html>

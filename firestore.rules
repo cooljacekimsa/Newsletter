@@ -26,5 +26,18 @@ service cloud.firestore {
       allow delete: if true;
       allow create, update: if false;
     }
+
+    // Review crawl runs: browser can read and delete
+    match /reviewCrawls/{docId} {
+      allow read: if true;
+      allow delete: if true;
+      allow create, update: if false;
+    }
+
+    // Review items: browser read-only; Actions (admin SDK) bypasses rules
+    match /reviewItems/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
   }
 }

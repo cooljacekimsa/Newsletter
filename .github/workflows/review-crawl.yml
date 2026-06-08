@@ -1,0 +1,42 @@
+name: Crawl Reviews
+
+on:
+  # Manual trigger only — triggered from the app via GitHub API (workflow_dispatch)
+  workflow_dispatch:
+    inputs:
+      target_url:
+        description: '크롤링할 리뷰 목록 페이지 URL'
+        required: false
+        default: ''
+
+jobs:
+  crawl:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Cache npm dependencies
+        uses: actions/cache@v4
+        with:
+          path: scripts/node_modules
+          key: ${{ runner.os }}-npm-${{ hashFiles('scripts/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-
+
+      - name: Install dependencies
+        run: npm install --prefer-offline
+        working-directory: scripts
+
+      - name: Run review crawler
+        run: node reviewCrawl.js "${{ github.event.inputs.target_url }}"
+        working-directory: scripts
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}

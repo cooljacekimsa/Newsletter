@@ -387,4 +387,4 @@ async function crawl({ seedUrls, rssUrls, hoursBack = 24, keywords, noisePhrases
   return all;
 }
 
-module.exports = { crawl };
+module.exports = { crawl, fetchUrl, getDomain, BROWSER_HEADERS };

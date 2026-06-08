@@ -101,7 +101,7 @@
 
     setProgress(15, 'running', '수집 요청 중...');
 
-    window.crawlView?.trigger(hoursBack, async (msg, type) => {
+    window.crawlView?.trigger('crawl.yml', { hours_back: String(hoursBack) }, async (msg, type) => {
       if (type === 'error') {
         setProgress(100, 'err', msg);
         setTimeout(hideProgress, 6000);
@@ -110,7 +110,7 @@
       }
       // type === 'success': 트리거 성공 → GitHub Actions 폴링 시작
       setProgress(30, 'running', '대기 중...');
-      await window.crawlView.pollRunStatus((status, conclusion) => {
+      await window.crawlView.pollRunStatus('crawl.yml', (status, conclusion) => {
         if (status === 'queued')      setProgress(30, 'running', '대기 중...');
         if (status === 'in_progress') setProgress(65, 'running', '수집 중...');
         if (status === 'timeout')     { setProgress(100, 'err', '시간 초과 — 로그 탭 확인'); setTimeout(hideProgress, 8000); btnRunCrawl.disabled = false; }

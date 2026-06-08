@@ -14,9 +14,10 @@ document.querySelectorAll('.tab').forEach(tab => {
     target.classList.add('active');
 
     // Lazy load on first visit
-    if (tab.dataset.tab === 'newsletter') window.nlView?.load();
-    if (tab.dataset.tab === 'settings')   window.settingsView?.load();
-    if (tab.dataset.tab === 'logs')       window.logsView?.load();
+    if (tab.dataset.tab === 'newsletter')  window.nlView?.load();
+    if (tab.dataset.tab === 'settings')    window.settingsView?.load();
+    if (tab.dataset.tab === 'reviewcrawl') window.reviewCrawlView?.load();
+    if (tab.dataset.tab === 'logs')        window.logsView?.load();
   });
 });
 

@@ -4,14 +4,13 @@
   const GH_PAT_KEY  = 'gh_pat_africa';
   const GH_OWNER    = 'shaunyoo-ao';
   const GH_REPO     = 'africa';
-  const GH_WORKFLOW = 'crawl.yml';
   const GH_BRANCH   = 'claude/deploy-firebase-MxySo';
 
   function getPat() {
     return localStorage.getItem(GH_PAT_KEY) || '';
   }
 
-  async function trigger(hoursBack, onResult) {
+  async function trigger(workflowFile, inputs, onResult) {
     const pat = getPat();
     if (!pat) {
       onResult('설정에서 GitHub PAT를 먼저 저장해주세요.', 'error');
@@ -20,7 +19,7 @@
     onResult('수집 요청 중...', 'info');
     try {
       const resp = await fetch(
-        `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/actions/workflows/${GH_WORKFLOW}/dispatches`,
+        `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/actions/workflows/${workflowFile}/dispatches`,
         {
           method: 'POST',
           headers: {
@@ -29,11 +28,11 @@
             'X-GitHub-Api-Version': '2022-11-28',
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ ref: GH_BRANCH, inputs: { hours_back: String(hoursBack) } }),
+          body: JSON.stringify({ ref: GH_BRANCH, inputs }),
         }
       );
       if (resp.status === 204) {
-        onResult(`✓ 수집 시작 (${hoursBack}시간) — 완료 후 새로고침하세요.`, 'success');
+        onResult('✓ 수집 시작 — 완료 후 새로고침하세요.', 'success');
       } else {
         const body = await resp.json().catch(() => ({}));
         const msg = body.message || `HTTP ${resp.status}`;
@@ -46,11 +45,11 @@
 
   const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-  async function pollRunStatus(onUpdate) {
+  async function pollRunStatus(workflowFile, onUpdate) {
     const pat = getPat();
     if (!pat) return;
 
-    const url = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/actions/workflows/${GH_WORKFLOW}/runs?branch=${encodeURIComponent(GH_BRANCH)}&per_page=1`;
+    const url = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/actions/workflows/${workflowFile}/runs?branch=${encodeURIComponent(GH_BRANCH)}&per_page=1`;
     const headers = {
       'Authorization': `Bearer ${pat}`,
       'Accept': 'application/vnd.github+json',

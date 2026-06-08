@@ -2,6 +2,8 @@
 
 (function () {
   const urlInput     = document.getElementById('rc-url-input');
+  const sinceDateInput = document.getElementById('rc-since-date');
+  const scopeRadios  = document.querySelectorAll('input[name="rc-scope"]');
   const listEl       = document.getElementById('rc-list');
   const modal        = document.getElementById('rc-modal');
   const modalTitle   = document.getElementById('rc-modal-title');
@@ -91,15 +93,28 @@
 
   function hideProgress() { progressEl.classList.add('hidden'); }
 
+  // ── 수집 범위 토글 (전체 / 기간 지정) ────────────────────
+  scopeRadios.forEach(r => r.addEventListener('change', () => {
+    const isPeriod = document.querySelector('input[name="rc-scope"]:checked')?.value === 'period';
+    sinceDateInput.classList.toggle('hidden', !isPeriod);
+  }));
+
   // ── 수집 트리거 ──────────────────────────────────────────
   btnRunCrawl.addEventListener('click', async () => {
     const targetUrl = urlInput.value.trim();
     if (!targetUrl) { alert('대상 URL을 입력하세요.'); return; }
 
+    const scope = document.querySelector('input[name="rc-scope"]:checked')?.value || 'all';
+    let sinceDate = '';
+    if (scope === 'period') {
+      sinceDate = sinceDateInput.value;
+      if (!sinceDate) { alert('시작일을 선택하세요.'); return; }
+    }
+
     btnRunCrawl.disabled = true;
     setProgress(15, 'running', '수집 요청 중...');
 
-    window.crawlView?.trigger(GH_WORKFLOW, { target_url: targetUrl }, async (msg, type) => {
+    window.crawlView?.trigger(GH_WORKFLOW, { target_url: targetUrl, since_date: sinceDate }, async (msg, type) => {
       if (type === 'error') {
         setProgress(100, 'err', msg);
         setTimeout(hideProgress, 6000);

@@ -166,6 +166,32 @@ function parseFromDom($, pageUrl) {
   return reviews;
 }
 
+// 파싱 실패 시 원인 추적용 — 받아온 HTML의 구조를 로그에 남김
+function diagnosePage($, html, pageUrl, logFn) {
+  const len = html.length;
+  const scriptIds = [];
+  $('script').each((_, el) => {
+    const id = $(el).attr('id');
+    const src = $(el).attr('src');
+    if (id) scriptIds.push(`#${id}`);
+    else if (src) scriptIds.push(`src:${src}`);
+  });
+  const markers = ['__NEXT_DATA__', '__NUXT__', '__next_f', 'api.hellopeter', 'application/ld+json']
+    .filter(m => html.includes(m));
+  const reviewHrefs = [];
+  $('a[href]').each((_, el) => {
+    const href = $(el).attr('href') || '';
+    if (/review/i.test(href) && reviewHrefs.length < 5) reviewHrefs.push(href);
+  });
+  const bodyText = $('body').text().replace(/\s+/g, ' ').trim().slice(0, 300);
+  const challengeHit = /just a moment|checking your browser|enable javascript|access denied|attention required/i.test(bodyText) || /just a moment|cf-browser-verification|challenge-platform/i.test(html);
+
+  logFn('info', `Diagnose ${pageUrl}: htmlLen=${len}, markers=[${markers.join(', ') || 'none'}], challenge=${challengeHit}`, pageUrl);
+  logFn('info', `Diagnose scripts (first 20): ${scriptIds.slice(0, 20).join(' | ') || 'none'}`, pageUrl);
+  logFn('info', `Diagnose review-like hrefs: ${reviewHrefs.join(' | ') || 'none'}`, pageUrl);
+  logFn('info', `Diagnose body text sample: ${bodyText || '(empty)'}`, pageUrl);
+}
+
 function buildPageUrl(baseUrl, page) {
   const u = new URL(baseUrl);
   u.searchParams.set('page', String(page));
@@ -194,6 +220,7 @@ async function crawlReviews(targetUrl, maxPages, logFn) {
 
     if (!pageReviews.length) {
       logFn('info', `No reviews found on page ${page} — stopping pagination`, pageUrl);
+      if (page === 1) diagnosePage($, html, pageUrl, logFn);
       break;
     }
 

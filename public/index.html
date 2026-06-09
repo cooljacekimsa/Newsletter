@@ -207,12 +207,21 @@
                  placeholder="https://www.hellopeter.com/회사명" />
         </div>
 
-        <label class="field-label mt">수집 범위</label>
-        <div class="radio-row">
-          <label><input type="radio" name="rc-scope" value="all" checked /> 전체</label>
-          <label><input type="radio" name="rc-scope" value="period" /> 기간 지정 (이후 ~ 현재)</label>
+        <label class="field-label mt">크롤링 타입</label>
+        <select id="rc-crawl-type" class="input" style="height:38px;padding:6px 10px;">
+          <option value="review">평가 리뷰 크롤링</option>
+          <!-- 새 타입 추가 시 여기에 <option value="...">...</option> 추가 -->
+        </select>
+
+        <!-- 평가 리뷰 크롤링 전용 옵션 -->
+        <div class="rc-type-section" data-type="review">
+          <label class="field-label mt">수집 범위</label>
+          <div class="radio-row">
+            <label><input type="radio" name="rc-scope" value="all" checked /> 전체</label>
+            <label><input type="radio" name="rc-scope" value="period" /> 기간 지정 (이후 ~ 현재)</label>
+          </div>
+          <input type="date" id="rc-since-date" class="input mt hidden" />
         </div>
-        <input type="date" id="rc-since-date" class="input mt hidden" />
       </div>
 
       <!-- Compact crawl bar -->

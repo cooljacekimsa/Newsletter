@@ -1,9 +1,10 @@
 'use strict';
 
 (function () {
-  const urlInput     = document.getElementById('rc-url-input');
+  const urlInput       = document.getElementById('rc-url-input');
+  const crawlTypeSelect = document.getElementById('rc-crawl-type');
   const sinceDateInput = document.getElementById('rc-since-date');
-  const scopeRadios  = document.querySelectorAll('input[name="rc-scope"]');
+  const scopeRadios    = document.querySelectorAll('input[name="rc-scope"]');
   const listEl       = document.getElementById('rc-list');
   const modal        = document.getElementById('rc-modal');
   const modalTitle   = document.getElementById('rc-modal-title');
@@ -92,6 +93,14 @@
   }
 
   function hideProgress() { progressEl.classList.add('hidden'); }
+
+  // ── 크롤링 타입 변경 시 해당 타입 전용 옵션만 표시 ──────
+  crawlTypeSelect.addEventListener('change', () => {
+    const type = crawlTypeSelect.value;
+    document.querySelectorAll('.rc-type-section').forEach(el => {
+      el.classList.toggle('hidden', el.dataset.type !== type);
+    });
+  });
 
   // ── 수집 범위 토글 (전체 / 기간 지정) ────────────────────
   scopeRadios.forEach(r => r.addEventListener('change', () => {

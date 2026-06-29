@@ -1,20 +1,16 @@
 /**
- * Firebase configuration for africa-office.
+ * Firebase configuration for newslettersa-d21db.
  *
- * ⚠️  ACTION REQUIRED: Replace REPLACE_WITH_API_KEY below.
- *   Firebase Console → Project Settings → General → Web API Key
- *
- * All other values are already filled in from your web app ID.
  * These values are safe to embed in frontend code — access is
  * controlled by Firestore Security Rules.
  */
 const firebaseConfig = {
-  apiKey:            "AIzaSyAZP2M8k0nhm5G6EVVj3gcLlwewUSZLO14",
-  authDomain:        "africa-office.firebaseapp.com",
-  projectId:         "africa-office",
-  storageBucket:     "africa-office.appspot.com",
-  messagingSenderId: "485578644088",
-  appId:             "1:485578644088:web:9de92c0747468784946b8d",
+  apiKey:            "AIzaSyCKOaVh7zqglStR7QUMVE88Y_fZvVUZg10",
+  authDomain:        "newslettersa-d21db.firebaseapp.com",
+  projectId:         "newslettersa-d21db",
+  storageBucket:     "newslettersa-d21db.firebasestorage.app",
+  messagingSenderId: "779985522966",
+  appId:             "1:779985522966:web:f33703c9fd4eadf9360037",
 };
 
 firebase.initializeApp(firebaseConfig);

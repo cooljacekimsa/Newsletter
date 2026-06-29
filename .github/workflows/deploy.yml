@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - claude/deploy-firebase-MxySo
+      - claude/firebase-web-app-impl-4ail8j
 
 jobs:
   deploy:
@@ -19,7 +20,7 @@ jobs:
           GOOGLE_APPLICATION_CREDENTIALS=/tmp/sa.json \
           npx firebase-tools@latest deploy \
             --only hosting \
-            --project africa-office \
+            --project newslettersa-d21db \
             --non-interactive
           rm -f /tmp/sa.json
         env:

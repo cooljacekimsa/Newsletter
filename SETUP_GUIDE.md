@@ -400,8 +400,8 @@ Firebase 앱 정보:
 - 배포 브랜치: claude/deploy-firebase-MxySo
 - 배포: deploy.yml이 hosting만 배포 (firestore 규칙은 수동)
 
-Firebase 프로젝트: africa-office
-라이브 URL: https://africa-office.web.app
+Firebase 프로젝트: newslettersa-d21db
+라이브 URL: https://newslettersa-d21db.web.app
 ```
 
 ---

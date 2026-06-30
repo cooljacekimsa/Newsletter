@@ -35,8 +35,13 @@
         onResult('✓ 수집 시작 — 완료 후 새로고침하세요.', 'success');
       } else {
         const body = await resp.json().catch(() => ({}));
-        const msg = body.message || `HTTP ${resp.status}`;
-        onResult(resp.status === 401 ? `인증 실패: PAT를 확인하세요. ${msg}` : `오류: ${msg}`, 'error');
+        const ghMsg = body.message || '(응답 없음)';
+        let detail = `HTTP ${resp.status}: ${ghMsg}`;
+        if (resp.status === 401) detail = `PAT 인증 실패 — 토큰을 확인하세요. (${ghMsg})`;
+        if (resp.status === 403) detail = `권한 없음 — PAT에 'workflow' 스코프가 필요합니다. (${ghMsg})`;
+        if (resp.status === 404) detail = `워크플로를 찾을 수 없음 (404) — 저장소: ${GH_OWNER}/${GH_REPO}, 브랜치: ${GH_BRANCH}, 워크플로: ${workflowFile}. PAT가 올바른 계정 것인지 확인하세요.`;
+        if (resp.status === 422) detail = `요청 오류 (422): ${ghMsg} — 브랜치명을 확인하세요.`;
+        onResult(`오류: ${detail}`, 'error');
       }
     } catch (e) {
       onResult(`네트워크 오류: ${e.message}`, 'error');

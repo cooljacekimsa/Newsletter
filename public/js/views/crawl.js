@@ -2,9 +2,9 @@
 
 (function () {
   const GH_PAT_KEY  = 'gh_pat_africa';
-  const GH_OWNER    = 'shaunyoo-ao';
-  const GH_REPO     = 'africa';
-  const GH_BRANCH   = 'claude/deploy-firebase-MxySo';
+  const GH_OWNER    = 'cooljacekimsa';
+  const GH_REPO     = 'Newsletter';
+  const GH_BRANCH   = 'claude/firebase-web-app-impl-4ail8j';
 
   function getPat() {
     return localStorage.getItem(GH_PAT_KEY) || '';

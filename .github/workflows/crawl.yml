@@ -17,6 +17,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: claude/firebase-web-app-impl-4ail8j
 
       - name: Set up Node.js 18
         uses: actions/setup-node@v4

@@ -3,7 +3,6 @@ name: Deploy to Firebase
 on:
   push:
     branches:
-      - claude/deploy-firebase-MxySo
       - claude/firebase-web-app-impl-4ail8j
 
 jobs:

@@ -3,7 +3,6 @@ name: Deploy to Firebase
 on:
   push:
     branches:
-      - claude/deploy-firebase-MxySo
       - claude/firebase-web-app-impl-4ail8j
 
 jobs:
@@ -13,6 +12,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: claude/firebase-web-app-impl-4ail8j
 
       - name: Deploy to Firebase Hosting
         run: |
@@ -26,10 +27,6 @@ jobs:
           code=$?
           echo "$out"
           rm -f /tmp/sa.json
-          # firebase-tools 15.x has a known bug: after a successful upload +
-          # finalize + release, it issues a redundant release call that returns
-          # HTTP 400 "is the current active version" and exits 1 — even though
-          # the content is already live. Treat only that specific case as success.
           if [ $code -ne 0 ] && echo "$out" | grep -q "is the current active version"; then
             echo "::notice::Content already live for this version — treating redundant release error as success."
             exit 0
